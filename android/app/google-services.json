@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "164449661415",
+    "project_id": "book-my-saloon-1abe1",
+    "storage_bucket": "book-my-saloon-1abe1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:164449661415:android:a3bfac6e0952a53139cd42",
+        "android_client_info": {
+          "package_name": "com.example.book_my_saloon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD817u1YX4SGAJoFFO72v7EUEcT3St00a0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
