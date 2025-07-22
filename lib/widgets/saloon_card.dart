@@ -11,8 +11,8 @@ class SaloonCard extends StatelessWidget {
     required this.address,
     required this.hours,
     required this.onTap,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,9 +20,9 @@ class SaloonCard extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           // Replace with a local asset or remove NetworkImage
-          child: Icon(Icons.store, color: Colors.grey), // Temporary fallback
-          // Alternatively, add an asset: Ensure assets are defined in pubspec.yaml
           backgroundImage: const AssetImage('components/images/placeholder.png'),
+          // Replace with a local asset or remove NetworkImage
+          child: Icon(Icons.store, color: Colors.grey),
         ),
         title: Text(name),
         subtitle: Column(

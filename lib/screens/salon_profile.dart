@@ -4,7 +4,7 @@ import 'booking_screen.dart';
 class SalonProfile extends StatefulWidget {
   final String salonName;
 
-  const SalonProfile({required this.salonName, Key? key}) : super(key: key);
+  const SalonProfile({required this.salonName, super.key});
 
   @override
   _SalonProfileState createState() => _SalonProfileState();
@@ -167,7 +167,7 @@ class _SalonProfileState extends State<SalonProfile> {
                     });
                   },
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

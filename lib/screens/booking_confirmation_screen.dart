@@ -12,14 +12,14 @@ class BookingConfirmationScreen extends StatelessWidget {
   final List<String> selectedTimeSlots; // Add time slots parameter
 
   const BookingConfirmationScreen({
-    Key? key,
+    super.key,
     required this.saloonName,
     required this.service,
     required this.date,
     required this.time,
     required this.selectedEmployee,
     required this.selectedTimeSlots,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +158,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                             ),
                           ),
                         )
-                        .toList(),
+                        ,
                   ],
                 ),
               ),
@@ -193,7 +193,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                     // Time Slot
                     _buildDetailRow(
                       'Time Slot',
-                      '$startTime - $endTime (${totalDuration} mins)',
+                      '$startTime - $endTime ($totalDuration mins)',
                     ),
                     SizedBox(height: 8),
 

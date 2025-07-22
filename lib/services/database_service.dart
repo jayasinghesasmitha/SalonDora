@@ -16,7 +16,7 @@ class DatabaseService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      throw e;
+      rethrow;
     }
   }
 

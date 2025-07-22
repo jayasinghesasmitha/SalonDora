@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:book_my_saloon/screens/booking_confirmation_screen.dart'; // Import the confirmation screen
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   _LoginScreenState createState() => _LoginScreenState();

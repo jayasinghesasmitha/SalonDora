@@ -9,7 +9,7 @@ import 'package:book_my_saloon/screens/auth/login_screen.dart';
 import 'package:book_my_saloon/screens/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+  const SignupScreen({super.key});
 
   @override
   _SignupScreenState createState() => _SignupScreenState();

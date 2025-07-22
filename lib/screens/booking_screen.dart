@@ -4,7 +4,7 @@ import 'package:book_my_saloon/screens/auth/login_screen.dart'; // Import the lo
 class BookingScreen extends StatefulWidget {
   final String saloonName;
 
-  const BookingScreen({Key? key, required this.saloonName}) : super(key: key);
+  const BookingScreen({super.key, required this.saloonName});
 
   @override
   _BookingScreenState createState() => _BookingScreenState();
