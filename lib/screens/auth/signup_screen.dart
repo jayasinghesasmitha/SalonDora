@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:book_my_saloon/services/auth_service.dart';
 import 'package:book_my_saloon/widgets/custom_button.dart';
 import 'package:book_my_saloon/widgets/custom_textfield.dart';
@@ -17,10 +16,12 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  String _selectedRole = 'customer'; // Default role
   bool _isLoading = false;
 
   Future<void> _signup() async {
@@ -38,18 +39,29 @@ class _SignupScreenState extends State<SignupScreen> {
       
       try {
         await AuthService().registerUser(
-          _nameController.text.trim(),
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          role: _selectedRole,
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
         );
         
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registration successful! Please check your email to confirm.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Navigate to login screen instead of home since email confirmation is required
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
-      } on FirebaseAuthException catch (e) {
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Registration failed')),
+          SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
         );
       } finally {
         setState(() {
@@ -61,7 +73,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -94,13 +107,59 @@ class _SignupScreenState extends State<SignupScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
+
+                  // // Role Selection
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.white,
+                  //     borderRadius: BorderRadius.circular(8),
+                  //     border: Border.all(color: Colors.grey.shade300),
+                  //   ),
+                  //   child: DropdownButtonHideUnderline(
+                  //     child: DropdownButton<String>(
+                  //       value: _selectedRole,
+                  //       isExpanded: true,
+                  //       hint: const Text('Select Role'),
+                  //       items: const [
+                  //         DropdownMenuItem(
+                  //           value: 'customer',
+                  //           child: Text('Customer'),
+                  //         ),
+                  //         DropdownMenuItem(
+                  //           value: 'salon_admin',
+                  //           child: Text('Salon Admin'),
+                  //         ),
+                  //       ],
+                  //       onChanged: (String? newValue) {
+                  //         setState(() {
+                  //           _selectedRole = newValue!;
+                  //         });
+                  //       },
+                  //     ),
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 20),
+                  
                   CustomTextField(
-                    controller: _nameController,
-                    label: 'Full Name',
-                    hint: 'Enter your full name',
+                    controller: _firstNameController,
+                    label: 'First Name',
+                    hint: 'Enter your first name',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
+                        return 'Please enter your first name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                    controller: _lastNameController,
+                    label: 'Last Name',
+                    hint: 'Enter your last name',
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your last name';
                       }
                       return null;
                     },
