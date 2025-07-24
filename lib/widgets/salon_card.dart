@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-class SaloonCard extends StatelessWidget {
+class SalonCard extends StatelessWidget {
   final String name;
   final String address;
-  final String hours;
+  // final String hours;
   final VoidCallback onTap;
 
-  const SaloonCard({
+  const SalonCard({
     required this.name,
     required this.address,
-    required this.hours,
+    // required this.hours,
     required this.onTap,
     super.key,
   });
@@ -20,7 +20,9 @@ class SaloonCard extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           // Replace with a local asset or remove NetworkImage
-          backgroundImage: const AssetImage('components/images/placeholder.png'),
+          backgroundImage: const AssetImage(
+            'components/images/placeholder.png',
+          ),
           // Replace with a local asset or remove NetworkImage
           child: Icon(Icons.store, color: Colors.grey),
         ),
@@ -28,9 +30,9 @@ class SaloonCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(hours),
-            Text('🌐 $address'),
-          ],
+            // Text(hours), 
+            Text('🌐 $address')
+            ],
         ),
         onTap: onTap,
       ),

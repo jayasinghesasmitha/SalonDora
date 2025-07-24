@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_saloon/utils/colors.dart';
-import 'package:book_my_saloon/utils/styles.dart';
+import 'package:book_my_salon/utils/colors.dart';
+import 'package:book_my_salon/utils/styles.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -39,9 +39,7 @@ class CustomTextField extends StatelessWidget {
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,

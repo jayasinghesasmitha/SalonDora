@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'booking_screen.dart';
 
 class SalonProfile extends StatefulWidget {
+  final String salonId; 
   final String salonName;
 
-  const SalonProfile({required this.salonName, super.key});
+  const SalonProfile({
+    required this.salonId,
+    required this.salonName, 
+    super.key
+    });
 
   @override
   _SalonProfileState createState() => _SalonProfileState();
@@ -25,7 +30,7 @@ class _SalonProfileState extends State<SalonProfile> {
   };
 
   Map<String, int> serviceDurations = {
-    "Hair Cutting and Shaving": 60,   // minutes
+    "Hair Cutting and Shaving": 60, // minutes
     "Oil Massage": 120,
     "Beard Trimming": 180,
   };
@@ -95,18 +100,22 @@ class _SalonProfileState extends State<SalonProfile> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(widget.salonName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text(
+                        widget.salonName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
                       const Row(
                         children: [
                           Icon(Icons.location_on, size: 16),
                           SizedBox(width: 4),
                           Text("Colombo"),
                         ],
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -123,12 +132,17 @@ class _SalonProfileState extends State<SalonProfile> {
                         double value = 1.0;
                         if (_pageController.position.hasPixels) {
                           value = _pageController.page! - index;
-                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0); // Smooth scale transition
+                          value = (1 - (value.abs() * 0.3)).clamp(
+                            0.7,
+                            1.0,
+                          ); // Smooth scale transition
                         }
                         return Transform.scale(
                           scale: Curves.easeInOut.transform(value),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Image.asset(
@@ -152,9 +166,10 @@ class _SalonProfileState extends State<SalonProfile> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text("Services",
-                  style: TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                "Services",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               ...selectedServices.keys.map((service) {
                 return CheckboxListTile(
@@ -172,24 +187,34 @@ class _SalonProfileState extends State<SalonProfile> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Duration",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                  Text("${(totalDuration / 60).toStringAsFixed(1)} hours",
-                      style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text(
+                    "Duration",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    "${(totalDuration / 60).toStringAsFixed(1)} hours",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Total",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                  Text("Rs $totalCost",
-                      style:
-                          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text(
+                    "Total",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    "Rs $totalCost",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -202,11 +227,15 @@ class _SalonProfileState extends State<SalonProfile> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => BookingScreen(saloonName: widget.salonName)),
+                      builder: (context) =>
+                          BookingScreen(salonName: widget.salonName),
+                    ),
                   );
                 },
-                child: const Text("Proceed",
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
+                child: const Text(
+                  "Proceed",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
             ],
           ),

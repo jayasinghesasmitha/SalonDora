@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:book_my_saloon/screens/auth/login_screen.dart';
-import 'package:book_my_saloon/screens/home_screen.dart';
-import 'package:book_my_saloon/services/auth_service.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -17,31 +17,24 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        Provider<AuthService>(create: (_) => AuthService()),
-      ],
+      providers: [Provider<AuthService>(create: (_) => AuthService())],
       child: MaterialApp(
-        title: 'Book My Saloon',
+        title: 'Book My Salon',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           primarySwatch: Colors.purple,
           scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            elevation: 0,
-            centerTitle: true,
-          ),
+          appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
         ),
         home: FutureBuilder<bool>(
           future: AuthService().isLoggedIn(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                body: Center(child: CircularProgressIndicator()),
               );
             }
-            
+
             final bool isLoggedIn = snapshot.data ?? false;
             return isLoggedIn ? const HomeScreen() : const LoginScreen();
           },

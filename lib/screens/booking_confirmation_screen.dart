@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:book_my_saloon/screens/home_screen.dart';
+import 'package:book_my_salon/screens/home_screen.dart';
 
 class BookingConfirmationScreen extends StatelessWidget {
-  final String saloonName;
+  final String salonName;
   final String
   service; // This should be a comma-separated string of selected services
   final DateTime date;
@@ -13,7 +13,7 @@ class BookingConfirmationScreen extends StatelessWidget {
 
   const BookingConfirmationScreen({
     super.key,
-    required this.saloonName,
+    required this.salonName,
     required this.service,
     required this.date,
     required this.time,
@@ -115,7 +115,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                saloonName,
+                                salonName,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -142,23 +142,21 @@ class BookingConfirmationScreen extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 8),
-                    ...selectedServices
-                        .map(
-                          (service) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(service),
-                                Text(
-                                  'Rs ${servicePrices[service]?.toStringAsFixed(2)}',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
+                    ...selectedServices.map(
+                      (service) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(service),
+                            Text(
+                              'Rs ${servicePrices[service]?.toStringAsFixed(2)}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                          ),
-                        )
-                        ,
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -231,7 +229,7 @@ class BookingConfirmationScreen extends StatelessWidget {
 
             // Action Buttons
             Column(
-              children: [ 
+              children: [
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pushReplacement(

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:book_my_saloon/models/booking_model.dart';
+import 'package:book_my_salon/models/booking_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -9,7 +9,7 @@ class DatabaseService {
     try {
       await _firestore.collection('bookings').add({
         'userId': booking.userId,
-        'saloonName': booking.saloonName,
+        'salonName': booking.salonName,
         'service': booking.service,
         'date': booking.date,
         'time': booking.time.toString(),
@@ -28,9 +28,9 @@ class DatabaseService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return Booking.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            return Booking.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 }

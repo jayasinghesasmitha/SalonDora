@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_saloon/screens/auth/login_screen.dart'; // Import the login screen
+import 'package:book_my_salon/screens/auth/login_screen.dart'; // Import the login screen
 
 class BookingScreen extends StatefulWidget {
-  final String saloonName;
+  final String salonName;
 
-  const BookingScreen({super.key, required this.saloonName});
+  const BookingScreen({super.key, required this.salonName});
 
   @override
   _BookingScreenState createState() => _BookingScreenState();
@@ -22,19 +22,22 @@ class _BookingScreenState extends State<BookingScreen> {
       '18': ['9:00', '9:30', '10:00'],
       '19': ['9:00', '9:30', '10:00'],
       '20': ['9:00', '9:30', '10:00'],
-      for (int i = 1; i <= 31; i++) if (i != 20) '$i': ['9:00', '9:30', '10:00'],
+      for (int i = 1; i <= 31; i++)
+        if (i != 20) '$i': ['9:00', '9:30', '10:00'],
     },
     'Vimal': {
       '18': ['11:00', '11:30', '12:00'],
       '19': ['11:00', '11:30', '12:00'],
       '20': ['11:00', '11:30', '12:00'],
-      for (int i = 1; i <= 31; i++) if (i != 20) '$i': ['11:00', '11:30', '12:00'],
+      for (int i = 1; i <= 31; i++)
+        if (i != 20) '$i': ['11:00', '11:30', '12:00'],
     },
     'Sunil': {
       '18': ['15:00', '16:00'],
       '19': ['15:00', '16:00'],
       '20': ['15:00'], // Removed 16:00 slot for 20th
-      for (int i = 1; i <= 31; i++) if (i != 20) '$i': ['15:00', '16:00'],
+      for (int i = 1; i <= 31; i++)
+        if (i != 20) '$i': ['15:00', '16:00'],
     },
   };
 
@@ -67,9 +70,9 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
             ),
             SizedBox(height: 20),
-            // Saloon Name
+            // Salon Name
             Text(
-              widget.saloonName,
+              widget.salonName,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
@@ -94,7 +97,9 @@ class _BookingScreenState extends State<BookingScreen> {
                         children: [
                           CircleAvatar(
                             radius: 20,
-                            backgroundColor: selectedDate == date ? Colors.black : Colors.grey,
+                            backgroundColor: selectedDate == date
+                                ? Colors.black
+                                : Colors.grey,
                             child: Text(
                               date,
                               style: TextStyle(color: Colors.white),
@@ -131,7 +136,9 @@ class _BookingScreenState extends State<BookingScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          if (selectedTimeSlots.contains(availableSlots[index])) {
+                          if (selectedTimeSlots.contains(
+                            availableSlots[index],
+                          )) {
                             selectedTimeSlots.remove(availableSlots[index]);
                           } else {
                             selectedTimeSlots.add(availableSlots[index]);
@@ -139,7 +146,8 @@ class _BookingScreenState extends State<BookingScreen> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedTimeSlots.contains(availableSlots[index])
+                        backgroundColor:
+                            selectedTimeSlots.contains(availableSlots[index])
                             ? Colors.grey
                             : null,
                         shape: RoundedRectangleBorder(

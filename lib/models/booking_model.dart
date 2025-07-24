@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class Booking {
   final String? id;
   final String userId;
-  final String saloonName;
+  final String salonName;
   final String service;
   final DateTime date;
   final TimeOfDay time;
@@ -13,7 +13,7 @@ class Booking {
   Booking({
     this.id,
     required this.userId,
-    required this.saloonName,
+    required this.salonName,
     required this.service,
     required this.date,
     required this.time,
@@ -25,7 +25,7 @@ class Booking {
     return Booking(
       id: id,
       userId: data['userId'] as String,
-      saloonName: data['saloonName'] as String,
+      salonName: data['salonName'] as String,
       service: data['service'] as String,
       date: (data['date'] as Timestamp).toDate(),
       time: TimeOfDay(
@@ -39,7 +39,7 @@ class Booking {
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
-      'saloonName': saloonName,
+      'salonName': salonName,
       'service': service,
       'date': date,
       'time': '${time.hour}:${time.minute}',

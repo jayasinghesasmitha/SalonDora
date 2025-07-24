@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
-import 'package:book_my_saloon/utils/colors.dart';
-import 'package:book_my_saloon/utils/styles.dart';
-import 'package:book_my_saloon/widgets/saloon_card.dart';
-import 'package:book_my_saloon/screens/salon_profile.dart';
-import 'package:book_my_saloon/screens/auth/login_screen.dart';
-import 'package:book_my_saloon/services/auth_service.dart';
-import 'package:book_my_saloon/services/salon_service.dart';
+import 'package:book_my_salon/utils/colors.dart';
+import 'package:book_my_salon/utils/styles.dart';
+import 'package:book_my_salon/widgets/salon_card.dart';
+import 'package:book_my_salon/screens/salon_profile.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,10 +21,10 @@ class _HomeScreenState extends State<HomeScreen> {
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
   bool _isSearching = false;
-  
+
   List<Map<String, dynamic>> _allSalons = [];
   List<Map<String, dynamic>> _displayedSalons = [];
-  
+
   final TextEditingController _searchController = TextEditingController();
   final SalonService _salonService = SalonService();
 
@@ -35,10 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchInitialData() async {
-    await Future.wait([
-      _fetchInitialLocation(),
-      _fetchAllSalons(),
-    ]);
+    await Future.wait([_fetchInitialLocation(), _fetchAllSalons()]);
   }
 
   Future<void> _fetchAllSalons() async {
@@ -51,7 +48,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error loading salons: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text(
+            'Error loading salons: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -79,7 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Search error: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text(
+            'Search error: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -100,7 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Logout error: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text(
+            'Logout error: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -161,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     }
-    
+
     // Fallback if location parsing fails
     return null;
   }
@@ -170,14 +173,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Book My Saloon', style: AppStyles.appBarStyle),
+        title: Text('Book My Salon', style: AppStyles.appBarStyle),
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
       ),
       body: _isLoading
@@ -195,26 +195,30 @@ class _HomeScreenState extends State<HomeScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      suffixIcon: _isSearching 
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                      suffixIcon: _isSearching
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              icon: Icon(
+                                _searchController.text.isEmpty
+                                    ? Icons.search
+                                    : Icons.clear,
+                              ),
+                              onPressed: () {
+                                if (_searchController.text.isNotEmpty) {
+                                  _searchController.clear();
+                                  _searchSalons('');
+                                }
+                              },
                             ),
-                          )
-                        : IconButton(
-                            icon: Icon(_searchController.text.isEmpty 
-                              ? Icons.search 
-                              : Icons.clear),
-                            onPressed: () {
-                              if (_searchController.text.isNotEmpty) {
-                                _searchController.clear();
-                                _searchSalons('');
-                              }
-                            },
-                          ),
                     ),
                     onChanged: (value) {
                       // Debounce search to avoid too many API calls
@@ -226,20 +230,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Map
                   Expanded(
                     flex: 2,
                     child: FlutterMap(
                       options: MapOptions(
-                        center: _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
+                        center:
+                            _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
                         zoom: 13.0,
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          urlTemplate:
+                              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                           subdomains: ['a', 'b', 'c'],
-                          userAgentPackageName: 'com.example.book_my_saloon',
+                          userAgentPackageName: 'com.example.book_my_salon',
                         ),
                         MarkerLayer(
                           markers: [
@@ -254,56 +260,64 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             // Salon markers
-                            ..._displayedSalons.map((salon) {
-                              final salonLocation = _getSalonLocation(salon);
-                              if (salonLocation == null) return null;
-                              
-                              return Marker(
-                                point: salonLocation,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => SalonProfile(
-                                          salonName: salon['salon_name'] ?? 'Unknown Salon'
-                                        ),
+                            ..._displayedSalons
+                                .map((salon) {
+                                  final salonLocation = _getSalonLocation(
+                                    salon,
+                                  );
+                                  if (salonLocation == null) return null;
+
+                                  return Marker(
+                                    point: salonLocation,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => SalonProfile(
+                                              salonId: salon['salon_id'] ?? '',
+                                              salonName:
+                                                  salon['salon_name'] ??
+                                                  'Unknown Salon',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: const Icon(
+                                        Icons.location_on,
+                                        color: Colors.red,
+                                        size: 30.0,
                                       ),
-                                    );
-                                  },
-                                  child: const Icon(
-                                    Icons.location_on,
-                                    color: Colors.red,
-                                    size: 30.0,
-                                  ),
-                                ),
-                              );
-                            }).where((marker) => marker != null).cast<Marker>(),
+                                    ),
+                                  );
+                                })
+                                .where((marker) => marker != null)
+                                .cast<Marker>(),
                           ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Section heading
                   Text(
-                    _searchController.text.isEmpty 
-                      ? 'All Salons' 
-                      : 'Search Results (${_displayedSalons.length})',
+                    _searchController.text.isEmpty
+                        ? 'All Salons'
+                        : 'Search Results (${_displayedSalons.length})',
                     style: AppStyles.sectionHeadingStyle,
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Salon list
                   Expanded(
                     flex: 1,
                     child: _displayedSalons.isEmpty
                         ? Center(
                             child: Text(
-                              _searchController.text.isEmpty 
-                                ? 'No salons available' 
-                                : 'No salons found for "${_searchController.text}"',
+                              _searchController.text.isEmpty
+                                  ? 'No salons available'
+                                  : 'No salons found for "${_searchController.text}"',
                               style: AppStyles.sectionHeadingStyle,
                             ),
                           )
@@ -311,16 +325,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             itemCount: _displayedSalons.length,
                             itemBuilder: (context, index) {
                               final salon = _displayedSalons[index];
-                              return SaloonCard(
+                              return SalonCard(
                                 name: salon['salon_name'] ?? 'Unknown Salon',
-                                address: salon['salon_address'] ?? 'Address not available',
-                                hours: '8:00 am to 10:00 pm', // You can add this field to your backend
+                                address:
+                                    salon['salon_address'] ??
+                                    'Address not available',
+                                // hours: '8:00 am to 10:00 pm', // You can add this field to your backend
                                 onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => SalonProfile(
-                                        salonName: salon['salon_name'] ?? 'Unknown Salon'
+                                        salonId: salon['salon_id'] ?? '',
+                                        salonName:
+                                            salon['salon_name'] ??
+                                            'Unknown Salon',
                                       ),
                                     ),
                                   );

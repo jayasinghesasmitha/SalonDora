@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:book_my_saloon/services/auth_service.dart';
+import 'package:book_my_salon/services/auth_service.dart';
 
 class SalonService {
   static String get baseUrl {
@@ -18,7 +18,7 @@ class SalonService {
   Future<List<Map<String, dynamic>>> getAllSalons() async {
     try {
       final token = await AuthService().getAccessToken();
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/salons'),
         headers: {
@@ -42,7 +42,7 @@ class SalonService {
   Future<List<Map<String, dynamic>>> searchSalonsByName(String name) async {
     try {
       final token = await AuthService().getAccessToken();
-      
+
       final response = await http.get(
         Uri.parse('$baseUrl/salons/name/${Uri.encodeComponent(name)}'),
         headers: {

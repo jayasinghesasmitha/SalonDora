@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_saloon/services/auth_service.dart';
-import 'package:book_my_saloon/screens/home_screen.dart';
-import 'package:book_my_saloon/screens/auth/signup_screen.dart';
-import 'package:book_my_saloon/widgets/custom_button.dart';
-import 'package:book_my_saloon/widgets/custom_textfield.dart';
-import 'package:book_my_saloon/utils/colors.dart';
-import 'package:book_my_saloon/utils/styles.dart';
+import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:book_my_salon/screens/auth/signup_screen.dart';
+import 'package:book_my_salon/widgets/custom_button.dart';
+import 'package:book_my_salon/widgets/custom_textfield.dart';
+import 'package:book_my_salon/utils/colors.dart';
+import 'package:book_my_salon/utils/styles.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 80),
                   // App Logo/Title
                   Text(
-                    'Book My Saloon',
+                    'Book My Salon',
                     style: AppStyles.headingStyle,
                     textAlign: TextAlign.center,
                   ),
@@ -87,14 +87,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 50),
-                  
+
                   // Social Login Button (Optional)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Google login not implemented yet')),
+                          const SnackBar(
+                            content: Text('Google login not implemented yet'),
+                          ),
                         );
                       },
                       icon: Image.network(
@@ -119,23 +121,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // OR Divider
                   Row(
                     children: [
                       const Expanded(child: Divider(color: Colors.white)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'OR',
-                          style: AppStyles.subHeadingStyle
-                        ),
+                        child: Text('OR', style: AppStyles.subHeadingStyle),
                       ),
                       const Expanded(child: Divider(color: Colors.white)),
                     ],
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // Email Field
                   CustomTextField(
                     controller: _emailController,
@@ -153,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Password Field
                   CustomTextField(
                     controller: _passwordController,
@@ -168,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // Login Button
                   CustomButton(
                     text: 'Login',
@@ -176,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLoading: _isLoading,
                   ),
                   const SizedBox(height: 20),
-                  
+
                   // Sign up link
                   TextButton(
                     onPressed: () {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_saloon/services/auth_service.dart';
-import 'package:book_my_saloon/widgets/custom_button.dart';
-import 'package:book_my_saloon/widgets/custom_textfield.dart';
-import 'package:book_my_saloon/utils/colors.dart';
-import 'package:book_my_saloon/utils/styles.dart';
-import 'package:book_my_saloon/screens/auth/login_screen.dart';
-import 'package:book_my_saloon/screens/home_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/widgets/custom_button.dart';
+import 'package:book_my_salon/widgets/custom_textfield.dart';
+import 'package:book_my_salon/utils/colors.dart';
+import 'package:book_my_salon/utils/styles.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/screens/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -27,16 +27,16 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _signup() async {
     if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Passwords do not match')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
         return;
       }
 
       setState(() {
         _isLoading = true;
       });
-      
+
       try {
         await AuthService().registerUser(
           email: _emailController.text.trim(),
@@ -45,15 +45,17 @@ class _SignupScreenState extends State<SignupScreen> {
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
         );
-        
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration successful! Please check your email to confirm.'),
+            content: Text(
+              'Registration successful! Please check your email to confirm.',
+            ),
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Navigate to login screen instead of home since email confirmation is required
         Navigator.pushReplacement(
           context,
@@ -96,7 +98,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 children: [
                   const SizedBox(height: 40),
                   Text(
-                    'Book My Saloon',
+                    'Book My Salon',
                     style: AppStyles.headingStyle,
                     textAlign: TextAlign.center,
                   ),
@@ -140,7 +142,6 @@ class _SignupScreenState extends State<SignupScreen> {
                   //   ),
                   // ),
                   // const SizedBox(height: 20),
-                  
                   CustomTextField(
                     controller: _firstNameController,
                     label: 'First Name',
