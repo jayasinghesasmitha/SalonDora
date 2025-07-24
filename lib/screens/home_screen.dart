@@ -5,6 +5,9 @@ import 'package:book_my_saloon/utils/colors.dart';
 import 'package:book_my_saloon/utils/styles.dart';
 import 'package:book_my_saloon/widgets/saloon_card.dart';
 import 'package:book_my_saloon/screens/salon_profile.dart';
+import 'package:book_my_saloon/screens/auth/login_screen.dart';
+import 'package:book_my_saloon/services/auth_service.dart';
+import 'package:book_my_saloon/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,50 +20,91 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   latLng.LatLng? _currentLocation;
   bool _isLoading = true;
-  final List<Map<String, dynamic>> _allSalons = [
-    {
-      'name': 'Salon Senasha',
-      'latitude': 6.7951 + 0.006, // ~666 m north
-      'longitude': 79.9009,
-      'address': 'North of University, Moratuwa',
-      'hours': '8:00 am to 10:00 pm'
-    },
-    {
-      'name': 'Dilianka Salon',
-      'latitude': 6.7951,
-      'longitude': 79.9009 + 0.007, // ~595 m east
-      'address': 'East of University, Moratuwa',
-      'hours': '8:00 am to 10:00 pm'
-    },
-    {
-      'name': 'Style Studio',
-      'latitude': 6.7951 - 0.006, // ~666 m south
-      'longitude': 79.9009,
-      'address': 'South of University, Moratuwa',
-      'hours': '8:00 am to 10:00 pm'
-    },
-    {
-      'name': "Dee's Hair Bea & Bridal Salon",
-      'latitude': 6.7951,
-      'longitude': 79.9009 - 0.007, // ~595 m west
-      'address': 'West of University, Moratuwa',
-      'hours': '8:00 am to 10:00 pm'
-    },
-    {
-      'name': 'Salon Sithru',
-      'latitude': 6.7951 + 0.004, // ~444 m northeast
-      'longitude': 79.9009 + 0.005, // ~425 m east
-      'address': 'Northeast of University, Moratuwa',
-      'hours': '8:00 am to 10:00 pm'
-    },
-  ];
-
-  List<Map<String, dynamic>> _nearbySalons = [];
+  bool _isSearching = false;
+  
+  List<Map<String, dynamic>> _allSalons = [];
+  List<Map<String, dynamic>> _displayedSalons = [];
+  
+  final TextEditingController _searchController = TextEditingController();
+  final SalonService _salonService = SalonService();
 
   @override
   void initState() {
     super.initState();
-    _fetchInitialLocation();
+    _fetchInitialData();
+  }
+
+  Future<void> _fetchInitialData() async {
+    await Future.wait([
+      _fetchInitialLocation(),
+      _fetchAllSalons(),
+    ]);
+  }
+
+  Future<void> _fetchAllSalons() async {
+    try {
+      final salons = await _salonService.getAllSalons();
+      setState(() {
+        _allSalons = salons;
+        _displayedSalons = salons;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading salons: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _searchSalons(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _displayedSalons = _allSalons;
+        _isSearching = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+    });
+
+    try {
+      final searchResults = await _salonService.searchSalonsByName(query);
+      setState(() {
+        _displayedSalons = searchResults;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Search error: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      await AuthService().signOut();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logout error: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _fetchInitialLocation() async {
@@ -83,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       setState(() {
         _currentLocation = latLng.LatLng(position.latitude, position.longitude);
-        _nearbySalons = _filterNearbySalons(_currentLocation!);
         _isLoading = false;
       });
     } catch (e) {
@@ -97,37 +140,43 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleLocationError() {
     setState(() {
       _currentLocation = latLng.LatLng(6.9271, 79.8612); // Default to Colombo
-      _nearbySalons = _filterNearbySalons(_currentLocation!);
       _isLoading = false;
     });
   }
 
-  List<Map<String, dynamic>> _filterNearbySalons(latLng.LatLng currentLocation) {
-    return _allSalons.where((salon) {
-      final salonLocation = latLng.LatLng(salon['latitude'], salon['longitude']);
-      final distance = Geolocator.distanceBetween(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        salonLocation.latitude,
-        salonLocation.longitude,
-      );
-      return distance <= 2000; // Filter salons within 2 km (adjust as needed)
-    }).toList();
+  // Helper method to get salon location from API data
+  latLng.LatLng? _getSalonLocation(Map<String, dynamic> salon) {
+    // Assuming your backend returns location data in a specific format
+    // Adjust this based on your actual API response structure
+    if (salon['location'] != null) {
+      // If location is stored as a string like "POINT(lng lat)"
+      final locationStr = salon['location'].toString();
+      final regex = RegExp(r'POINT\(([^\s]+)\s([^\)]+)\)');
+      final match = regex.firstMatch(locationStr);
+      if (match != null) {
+        final lng = double.tryParse(match.group(1) ?? '');
+        final lat = double.tryParse(match.group(2) ?? '');
+        if (lng != null && lat != null) {
+          return latLng.LatLng(lat, lng);
+        }
+      }
+    }
+    
+    // Fallback if location parsing fails
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('VIVORA', style: AppStyles.appBarStyle),
+        title: Text('Book My Saloon', style: AppStyles.appBarStyle),
         backgroundColor: AppColors.primaryColor,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // Implement logout functionality
-            },
+            onPressed: _logout,
           ),
         ],
       ),
@@ -138,15 +187,47 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Search Field
                   TextField(
+                    controller: _searchController,
                     decoration: InputDecoration(
                       hintText: 'Search a Salon...',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                      suffixIcon: _isSearching 
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            icon: Icon(_searchController.text.isEmpty 
+                              ? Icons.search 
+                              : Icons.clear),
+                            onPressed: () {
+                              if (_searchController.text.isNotEmpty) {
+                                _searchController.clear();
+                                _searchSalons('');
+                              }
+                            },
+                          ),
                     ),
+                    onChanged: (value) {
+                      // Debounce search to avoid too many API calls
+                      Future.delayed(const Duration(milliseconds: 500), () {
+                        if (_searchController.text == value) {
+                          _searchSalons(value);
+                        }
+                      });
+                    },
                   ),
                   const SizedBox(height: 16),
+                  
+                  // Map
                   Expanded(
                     flex: 2,
                     child: FlutterMap(
@@ -162,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         MarkerLayer(
                           markers: [
+                            // Current location marker
                             if (_currentLocation != null)
                               Marker(
                                 point: _currentLocation!,
@@ -171,60 +253,91 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size: 30.0,
                                 ),
                               ),
-                            ..._nearbySalons.map((salon) => Marker(
-                                  point: latLng.LatLng(salon['latitude'], salon['longitude']),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => SalonProfile(salonName: salon['name']),
+                            // Salon markers
+                            ..._displayedSalons.map((salon) {
+                              final salonLocation = _getSalonLocation(salon);
+                              if (salonLocation == null) return null;
+                              
+                              return Marker(
+                                point: salonLocation,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SalonProfile(
+                                          salonName: salon['salon_name'] ?? 'Unknown Salon'
                                         ),
-                                      );
-                                    },
-                                    child: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                      size: 30.0,
-                                    ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Colors.red,
+                                    size: 30.0,
                                   ),
-                                )),
+                                ),
+                              );
+                            }).where((marker) => marker != null).cast<Marker>(),
                           ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
+                  
+                  // Section heading
                   Text(
-                    'Nearby Saloons',
+                    _searchController.text.isEmpty 
+                      ? 'All Salons' 
+                      : 'Search Results (${_displayedSalons.length})',
                     style: AppStyles.sectionHeadingStyle,
                   ),
                   const SizedBox(height: 16),
+                  
+                  // Salon list
                   Expanded(
                     flex: 1,
-                    child: ListView.builder(
-                      itemCount: _nearbySalons.length,
-                      itemBuilder: (context, index) {
-                        final salon = _nearbySalons[index];
-                        return SaloonCard(
-                          name: salon['name'],
-                          address: salon['address'],
-                          hours: salon['hours'],
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SalonProfile(salonName: salon['name']),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                    child: _displayedSalons.isEmpty
+                        ? Center(
+                            child: Text(
+                              _searchController.text.isEmpty 
+                                ? 'No salons available' 
+                                : 'No salons found for "${_searchController.text}"',
+                              style: AppStyles.sectionHeadingStyle,
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _displayedSalons.length,
+                            itemBuilder: (context, index) {
+                              final salon = _displayedSalons[index];
+                              return SaloonCard(
+                                name: salon['salon_name'] ?? 'Unknown Salon',
+                                address: salon['salon_address'] ?? 'Address not available',
+                                hours: '8:00 am to 10:00 pm', // You can add this field to your backend
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SalonProfile(
+                                        salonName: salon['salon_name'] ?? 'Unknown Salon'
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

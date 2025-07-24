@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:3000/api'; // Replace with your actual backend URL
+  static const String baseUrl = 'http://10.0.2.2:3000/api'; 
   
   // Login with email and password
   Future<Map<String, dynamic>> loginUser(String email, String password) async {

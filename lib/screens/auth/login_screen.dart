@@ -140,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   CustomTextField(
                     controller: _emailController,
                     label: 'Email',
-                    hint: 'Enter your email buddy',
+                    hint: 'Enter your email',
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
