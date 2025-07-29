@@ -1,40 +1,57 @@
 import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:3000/api'; 
-  
+  static const String baseUrl = 'http://10.0.2.2:3000/api';
+  static AuthService? _instance;
+  late Dio _dio;
+  late CookieJar _cookieJar;
+
+  // Singleton pattern
+  factory AuthService() {
+    _instance ??= AuthService._internal();
+    return _instance!;
+  }
+
+  AuthService._internal() {
+    _cookieJar = CookieJar();
+    _dio = Dio();
+    _dio.interceptors.add(CookieManager(_cookieJar));
+  }
+
   // Login with email and password
   Future<Map<String, dynamic>> loginUser(String email, String password) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
+      final response = await _dio.post(
+        '$baseUrl/auth/login',
+        data: {
           'email': email,
           'password': password,
-        }),
+        },
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        
+        final data = response.data;
         // Store tokens in SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('access_token', data['session']['access_token']);
-        await prefs.setString('refresh_token', data['session']['refresh_token']);
-        await prefs.setString('user_role', data['customRole']);
+        if (data != null && data['access_token'] != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('access_token', data['access_token']);
+          await prefs.setString('user_role', data['customRole']);
+        } else {
+          throw Exception('Invalid response format: access_token is null');
+        }
         
         return data;
       } else {
-        final error = jsonDecode(response.body);
-        throw Exception(error['error'] ?? 'Login failed');
+        throw Exception(response.data['error'] ?? 'Login failed');
       }
     } catch (e) {
+      if (e is DioException) {
+        throw Exception('Login error: ${e.response?.data['error'] ?? e.message}');
+      }
       throw Exception('Login error: $e');
     }
   }
@@ -70,21 +87,20 @@ class AuthService {
         if (salonLogoLink != null) 'salon_logo_link': salonLogoLink,
       };
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
+      final response = await _dio.post(
+        '$baseUrl/auth/register',
+        data: body,
       );
 
       if (response.statusCode == 201) {
-        return jsonDecode(response.body);
+        return response.data;
       } else {
-        final error = jsonDecode(response.body);
-        throw Exception(error['error'] ?? 'Registration failed');
+        throw Exception(response.data['error'] ?? 'Registration failed');
       }
     } catch (e) {
+      if (e is DioException) {
+        throw Exception('Registration error: ${e.response?.data['error'] ?? e.message}');
+      }
       throw Exception('Registration error: $e');
     }
   }
@@ -94,25 +110,26 @@ class AuthService {
     try {
       final token = await getAccessToken();
       
-      await http.post(
-        Uri.parse('$baseUrl/auth/logout'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
+      await _dio.post(
+        '$baseUrl/auth/logout',
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
       );
 
-      // Clear stored tokens
+      // Clear stored tokens and cookies
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
-      await prefs.remove('refresh_token');
       await prefs.remove('user_role');
+      _cookieJar.deleteAll(); // Clear all cookies
     } catch (e) {
       // Still clear local tokens even if backend call fails
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
-      await prefs.remove('refresh_token');
       await prefs.remove('user_role');
+      _cookieJar.deleteAll();
       throw Exception('Logout error: $e');
     }
   }
@@ -121,12 +138,6 @@ class AuthService {
   Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('access_token');
-  }
-
-  // Get refresh token
-  Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('refresh_token');
   }
 
   // Get user role
@@ -141,57 +152,48 @@ class AuthService {
     return token != null;
   }
 
-  // Refresh access token
+  // Refresh access token (now uses cookies automatically)
   Future<Map<String, dynamic>> refreshAccessToken() async {
     try {
-      final refreshToken = await getRefreshToken();
-      if (refreshToken == null) {
-        throw Exception('No refresh token available');
-      }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/refresh-token'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'refresh_token': refreshToken,
-        }),
-      );
+      // The refresh token cookie is automatically sent by dio
+      final response = await _dio.post('$baseUrl/auth/refresh-token');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final data = response.data;
         
-        // Update stored tokens
+        // Update stored access token
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('access_token', data['session']['access_token']);
-        await prefs.setString('refresh_token', data['session']['refresh_token']);
         
         return data;
       } else {
-        final error = jsonDecode(response.body);
-        throw Exception(error['error'] ?? 'Token refresh failed');
+        throw Exception(response.data['error'] ?? 'Token refresh failed');
       }
     } catch (e) {
+      if (e is DioException) {
+        throw Exception('Token refresh error: ${e.response?.data['error'] ?? e.message}');
+      }
       throw Exception('Token refresh error: $e');
     }
   }
 
-  // Get current user info (you'll need to create this endpoint on your backend)
+  // Get current user info
   Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
       final token = await getAccessToken();
       if (token == null) return null;
 
-      final response = await http.get(
-        Uri.parse('$baseUrl/auth/user'), // You'll need to create this endpoint
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
+      final response = await _dio.get(
+        '$baseUrl/auth/user',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return response.data;
       } else if (response.statusCode == 401) {
         // Token might be expired, try to refresh
         try {
