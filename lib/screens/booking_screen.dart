@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
+import 'package:provider/provider.dart';
 
 class BookingScreen extends StatefulWidget {
   final String salonName;
@@ -220,18 +223,41 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               ),
             // Confirm Button
-            ElevatedButton(
-              onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
-                  ? () {
-                      setState(() {
-                        isConfirmed = true;
-                      });
+           ElevatedButton(
+            onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
+                ? () async {
+                    setState(() {
+                      isConfirmed = true;
+                    });
+                    
+                    final authService = Provider.of<AuthService>(context, listen: false);
+                    final isLoggedIn = await authService.isLoggedIn();
+
+                    if (isLoggedIn) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingConfirmationScreen(
+                            salonName: widget.salonName,
+                            service: "Selected Services", // Update this with actual services
+                            date: DateTime.now().add(Duration(days: int.parse(selectedDate) - DateTime.now().day)),
+                            time: TimeOfDay(
+                              hour: int.parse(selectedTimeSlots.first.split(':')[0]),
+                              minute: int.parse(selectedTimeSlots.first.split(':')[1]),
+                            ),
+                            selectedEmployee: selectedEmployee,
+                            selectedTimeSlots: selectedTimeSlots,
+                          ),
+                        ),
+                      );
+                    } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => LoginScreen()),
                       );
                     }
-                  : null,
+                  }
+                : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                 shape: RoundedRectangleBorder(

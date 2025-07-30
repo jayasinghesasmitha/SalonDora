@@ -9,6 +9,8 @@ import 'package:book_my_salon/screens/auth/login_screen.dart';
 import 'package:book_my_salon/services/auth_service.dart';
 import 'package:book_my_salon/services/salon_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:book_my_salon/screens/user_profile.dart';
+import 'package:book_my_salon/screens/current_booking.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -351,6 +353,45 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home, color: Colors.black),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.book, color: Colors.black),
+            label: 'My Bookings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person, color: Colors.black),
+            label: 'Profile',
+          ),
+        ],
+        currentIndex: 0, // Highlight the Home icon
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey[500], // Ash for unselected items
+        backgroundColor: Colors.white,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              // Stay on current page
+              break;
+            case 1:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const CurrentBooking()),
+              );
+              break;
+            case 2:
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => UserProfile()),
+              );
+              break;
+          }
+        },
+      ),
     );
   }
 

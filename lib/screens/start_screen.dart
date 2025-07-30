@@ -78,7 +78,14 @@ class _StartScreenState extends State<StartScreen>
     });
 
     _controller.forward();
-    _checkAuthAndNavigate();
+    // _checkAuthAndNavigate();
+
+    Timer(const Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+    });
   }
 
   Future<void> _checkAuthAndNavigate() async {
