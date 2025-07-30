@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
+// import 'package:book_my_salon/screens/auth/login_screen.dart';
+// import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:book_my_salon/services/auth_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:book_my_salon/screens/start_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,19 +28,20 @@ class MyApp extends StatelessWidget {
           scaffoldBackgroundColor: Colors.white,
           appBarTheme: const AppBarTheme(elevation: 0, centerTitle: true),
         ),
-        home: FutureBuilder<bool>(
-          future: AuthService().isLoggedIn(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-
-            final bool isLoggedIn = snapshot.data ?? false;
-            return isLoggedIn ? const HomeScreen() : const LoginScreen();
-          },
-        ),
+        // home: FutureBuilder<bool>(
+        //  future: Future.wait([
+        //     AuthService().isLoggedIn(),
+        //     Future.delayed(const Duration(seconds: 3)),
+        //   ]).then((results) => results[0] as bool),
+        //   builder: (context, snapshot) {
+        //     if (snapshot.connectionState == ConnectionState.waiting) {
+        //       return const StartScreen();
+        //     }
+        //     final bool isLoggedIn = snapshot.data ?? false;
+        //     return isLoggedIn ? const HomeScreen() : const LoginScreen();
+        //   },
+        // ),
+        home: const StartScreen(),
       ),
     );
   }

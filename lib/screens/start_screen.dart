@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:book_my_salon/screens/home_screen.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart';
+import 'package:book_my_salon/services/auth_service.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -18,6 +20,8 @@ class _StartScreenState extends State<StartScreen>
   late Animation<Offset> _textSlideAnimation;
   late Animation<double> _textScaleAnimation;
   late Animation<Offset> _creatorSlideAnimation;
+  
+  bool? _isLoggedIn;
 
   @override
   void initState() {
@@ -72,15 +76,28 @@ class _StartScreenState extends State<StartScreen>
     _controller.addListener(() {
       setState(() {});
     });
-    _controller.forward();
 
-    // Navigate to home screen after 2 seconds
-    Timer(const Duration(seconds: 2), () {
+    _controller.forward();
+    _checkAuthAndNavigate();
+  }
+
+  Future<void> _checkAuthAndNavigate() async {
+    // Check authentication in background
+    final authResult = await AuthService().isLoggedIn();
+    _isLoggedIn = authResult;
+
+    // Wait for animation to complete (2 seconds)
+    await _controller.forward();
+    
+    // Navigate based on auth result
+    if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => _isLoggedIn! ? const HomeScreen() : const LoginScreen(),
+        ),
       );
-    });
+    }
   }
 
   @override
