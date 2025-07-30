@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/auth/login_screen.dart'; // Import the login screen
+import 'package:book_my_salon/screens/auth/login_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   final String salonName;
 
-  const BookingScreen({super.key, required this.salonName});
+  const BookingScreen({Key? key, required this.salonName}) : super(key: key);
 
   @override
   _BookingScreenState createState() => _BookingScreenState();
@@ -40,6 +40,9 @@ class _BookingScreenState extends State<BookingScreen> {
         if (i != 20) '$i': ['15:00', '16:00'],
     },
   };
+
+  // Pricing logic (example: Rs 500 per time slot)
+  int get totalPrice => selectedTimeSlots.length * 500;
 
   @override
   Widget build(BuildContext context) {
@@ -148,18 +151,74 @@ class _BookingScreenState extends State<BookingScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
                             selectedTimeSlots.contains(availableSlots[index])
-                            ? Colors.grey
-                            : null,
+                            ? Colors.grey[500] // Ash color for selected slots
+                            : Colors
+                                  .grey[200], // Ash color for unselected slots
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(availableSlots[index]),
+                      child: Text(
+                        availableSlots[index],
+                        style: TextStyle(color: Colors.black),
+                      ),
                     ),
                   );
                 },
               ),
             ),
+            // Booking Details Section
+            if (selectedTimeSlots.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your Booking Details',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Employee: ${selectedEmployee}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                    Text(
+                      'Date: ${selectedDate} July 2025',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                    Text(
+                      'Time Slots: ${selectedTimeSlots.join(', ')}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                    Text(
+                      'Total Price: Rs $totalPrice',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // Confirm Button
             ElevatedButton(
               onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
@@ -174,13 +233,20 @@ class _BookingScreenState extends State<BookingScreen> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+                backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 // Disable button when onPressed is null
               ),
-              child: Text('Confirm'),
+              child: const Text(
+                'Confirm',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
             ),
           ],
         ),
