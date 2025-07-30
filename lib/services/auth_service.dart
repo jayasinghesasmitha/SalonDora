@@ -9,7 +9,7 @@ class AuthService {
   static AuthService? _instance;
   late Dio _dio;
   late CookieJar _cookieJar;
-
+  Dio get dio => _dio;
   // Singleton pattern
   factory AuthService() {
     _instance ??= AuthService._internal();
