@@ -19,16 +19,18 @@ class SalonProfile extends StatefulWidget {
 class _SalonProfileState extends State<SalonProfile> {
   late PageController _pageController;
   Map<String, dynamic>? salonData;
-  List<Map<String, dynamic>> services = [];
+  List<Map<String, dynamic>> allServices = []; // Store all services
+  List<Map<String, dynamic>> filteredServices = []; // Store filtered services
   Map<String, bool> selectedServices = {};
   bool isLoading = true;
   String? error;
+  String selectedCategory = 'All'; // Default to show all services
 
   int get totalCost => selectedServices.entries
       .where((e) => e.value)
       .map(
         (e) =>
-            services.firstWhere((s) => s['service_name'] == e.key)['price']
+            filteredServices.firstWhere((s) => s['service_name'] == e.key)['price']
                 as int,
       )
       .fold(0, (a, b) => a + b);
@@ -37,7 +39,7 @@ class _SalonProfileState extends State<SalonProfile> {
       .where((e) => e.value)
       .map(
         (e) =>
-            services.firstWhere(
+            filteredServices.firstWhere(
                   (s) => s['service_name'] == e.key,
                 )['duration_minutes']
                 as int,
@@ -50,6 +52,7 @@ class _SalonProfileState extends State<SalonProfile> {
     _pageController = PageController(
       initialPage: 0,
       viewportFraction: 0.7, // 70% of width for current image
+      keepPage: true,
     );
     _loadSalonData();
   }
@@ -69,14 +72,14 @@ class _SalonProfileState extends State<SalonProfile> {
 
       setState(() {
         salonData = results[0] as Map<String, dynamic>;
-        services = results[1] as List<Map<String, dynamic>>;
-
+        allServices = results[1] as List<Map<String, dynamic>>;
+        
+        // Initially show all services
+        filteredServices = List.from(allServices);
+        
         // Initialize selected services map
-        selectedServices = {
-          for (var service in services)
-            service['service_name'] as String: false,
-        };
-
+        _initializeSelectedServices();
+        
         isLoading = false;
       });
     } catch (e) {
@@ -85,6 +88,50 @@ class _SalonProfileState extends State<SalonProfile> {
         isLoading = false;
       });
     }
+  }
+
+  void _initializeSelectedServices() {
+    selectedServices = {
+      for (var service in filteredServices)
+        service['service_name'] as String: false,
+    };
+  }
+
+  void _updateServices(String category) {
+    setState(() {
+      selectedCategory = category;
+      
+      if (category == 'All') {
+        filteredServices = List.from(allServices);
+      } else {
+        // Map the button text to actual category values in your database
+        String categoryFilter;
+        switch (category) {
+          case 'Male':
+            categoryFilter = 'men';
+            break;
+          case 'Female':
+            categoryFilter = 'women';
+            break;
+          case 'Children':
+            categoryFilter = 'children';
+            break;
+          case 'Unisex':
+            categoryFilter = 'unisex';
+            break;
+          default:
+            categoryFilter = category.toLowerCase();
+        }
+        
+        filteredServices = allServices
+            .where((service) => 
+                service['service_category']?.toString().toLowerCase() == categoryFilter)
+            .toList();
+      }
+      
+      // Reset selected services for the new filtered list
+      _initializeSelectedServices();
+    });
   }
 
   @override
@@ -96,7 +143,9 @@ class _SalonProfileState extends State<SalonProfile> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     if (error != null) {
@@ -106,7 +155,10 @@ class _SalonProfileState extends State<SalonProfile> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text('Error: $error'),
-              ElevatedButton(onPressed: _loadSalonData, child: Text('Retry')),
+              ElevatedButton(
+                onPressed: _loadSalonData,
+                child: Text('Retry'),
+              ),
             ],
           ),
         ),
@@ -116,11 +168,11 @@ class _SalonProfileState extends State<SalonProfile> {
     // Extract banner images
     final List<String> bannerImages = salonData?['banner_images'] != null
         ? (salonData!['banner_images'] as List)
-              .map((img) => img['image_link']?.toString())
-              .where((link) => link != null && link!.isNotEmpty)
-              .cast<String>()
-              .toList()
-        : ['https://placehold.co/300x200'];
+            .map((img) => img['image_link'] as String?)
+            .where((link) => link != null && link.isNotEmpty)
+            .cast<String>()
+            .toList()
+        : ['https://placehold.co/300x200']; // Fallback image
 
     return Scaffold(
       body: SafeArea(
@@ -150,11 +202,7 @@ class _SalonProfileState extends State<SalonProfile> {
                             width: 50,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                Icons.store,
-                                size: 50,
-                                color: Colors.grey,
-                              );
+                              return Icon(Icons.store, size: 50, color: Colors.grey);
                             },
                           )
                         : Icon(Icons.store, size: 50, color: Colors.grey),
@@ -201,7 +249,7 @@ class _SalonProfileState extends State<SalonProfile> {
                 ],
               ),
               const SizedBox(height: 16),
-
+              
               // Horizontal Scrollable Image Gallery
               SizedBox(
                 height: 200,
@@ -213,17 +261,19 @@ class _SalonProfileState extends State<SalonProfile> {
                       animation: _pageController,
                       builder: (context, child) {
                         double value = 1.0;
-                        if (_pageController.position.hasPixels) {
+                        if (_pageController.hasClients && _pageController.position.hasPixels) {
                           final currentPage = _pageController.page ?? 0.0;
                           value = currentPage - index;
+                          value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                        } else {
+                          // Before the controller is fully initialized, use the initial page
+                          value = _pageController.initialPage.toDouble() - index;
                           value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
                         }
                         return Transform.scale(
                           scale: Curves.easeInOut.transform(value),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
                               child: Image.network(
@@ -234,7 +284,9 @@ class _SalonProfileState extends State<SalonProfile> {
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     color: Colors.grey,
-                                    child: Center(child: Text('Image Error')),
+                                    child: Center(
+                                      child: Text('Image Error'),
+                                    ),
                                   );
                                 },
                               ),
@@ -246,26 +298,49 @@ class _SalonProfileState extends State<SalonProfile> {
                   },
                 ),
               ),
-
+              
               const SizedBox(height: 24),
               const Text(
                 "Services",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
-
-              // Dynamic services from API
-              if (services.isEmpty)
-                Text('No services available')
+              
+              // Service Category Filter Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: ['All', 'Male', 'Female', 'Children', 'Unisex'].map((category) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                    child: ElevatedButton(
+                      onPressed: () => _updateServices(category),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: selectedCategory == category ? Colors.black : Colors.grey,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                        textStyle: const TextStyle(fontSize: 12),
+                      ),
+                      child: Text(category),
+                    ),
+                  );
+                }).toList(),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Dynamic services from API (filtered)
+              if (filteredServices.isEmpty)
+                Text('No services available for ${selectedCategory.toLowerCase()} category')
               else
-                ...services.map((service) {
+                ...filteredServices.map((service) {
                   final serviceName = service['service_name'] as String;
                   final price = service['price'] as int;
                   final duration = service['duration_minutes'] as int;
-
+                  final category = service['service_category'] as String?;
+                  
                   return CheckboxListTile(
                     title: Text(serviceName),
-                    subtitle: Text('Rs $price • ${duration} min'),
+                    subtitle: Text('Rs $price • ${duration} min${category != null ? ' • ${category.toUpperCase()}' : ''}'),
                     value: selectedServices[serviceName] ?? false,
                     onChanged: (bool? value) {
                       setState(() {
@@ -274,7 +349,7 @@ class _SalonProfileState extends State<SalonProfile> {
                     },
                   );
                 }),
-
+              
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -315,19 +390,16 @@ class _SalonProfileState extends State<SalonProfile> {
                   backgroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: selectedServices.values.contains(true)
-                    ? () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingScreen(
-                              salonName:
-                                  salonData?['salon_name'] ?? widget.salonName,
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
+                onPressed: selectedServices.values.contains(true) ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookingScreen(
+                        salonName: salonData?['salon_name'] ?? widget.salonName,
+                      ),
+                    ),
+                  );
+                } : null,
                 child: const Text(
                   "Proceed",
                   style: TextStyle(color: Colors.white, fontSize: 16),
