@@ -5,7 +5,6 @@ import 'package:book_my_salon/widgets/custom_textfield.dart';
 import 'package:book_my_salon/utils/colors.dart';
 import 'package:book_my_salon/utils/styles.dart';
 import 'package:book_my_salon/screens/auth/login_screen.dart';
-import 'package:book_my_salon/screens/home_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
