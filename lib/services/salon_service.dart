@@ -86,4 +86,73 @@ class SalonService {
       throw Exception('Error searching salons: $e');
     }
   }
+
+  // Get salon by ID with banner images
+  Future<Map<String, dynamic>> getSalonById(String salonId) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.get(
+        '$baseUrl/salons/by-id/$salonId',
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getSalonById(salonId); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 404) {
+        throw Exception('Salon not found or not approved');
+      }
+      throw Exception('Error fetching salon details: $e');
+    }
+  }
+
+  // Get salon services by salon ID
+  Future<List<Map<String, dynamic>>> getSalonServices(String salonId) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.get(
+        '$baseUrl/salons/$salonId/services',
+        options: Options(
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.data['success'] == true) {
+        final List<dynamic> services = response.data['data'];
+        return services.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to fetch services');
+      }
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getSalonServices(salonId); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Invalid salon ID');
+      }
+      throw Exception('Error fetching salon services: $e');
+    }
+  }
 }
