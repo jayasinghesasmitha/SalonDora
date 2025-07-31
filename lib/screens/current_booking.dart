@@ -255,7 +255,14 @@ class _CurrentBookingState extends State<CurrentBooking> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          BookingScreen(salonName: ''),
+                                          BookingScreen(
+                                            salonId: '',
+                                            salonName: '',
+                                            selectedServices: [],
+                                            totalCost: 1000,
+                                            totalDuration: 1000,
+                                            salonData: null,
+                                            ),
                                     ),
                                   );
                                 },

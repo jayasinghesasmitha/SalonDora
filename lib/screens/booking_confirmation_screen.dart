@@ -8,6 +8,8 @@ class BookingConfirmationScreen extends StatelessWidget {
   service; // This should be a comma-separated string of selected services
   final DateTime date;
   final TimeOfDay time;
+  final int totalDuration; // Total duration in minutes
+  final int totalPrice; // Total price in Rs
   final String selectedEmployee; // Add employee parameter
   final List<String> selectedTimeSlots; // Add time slots parameter
 
@@ -17,6 +19,8 @@ class BookingConfirmationScreen extends StatelessWidget {
     required this.service,
     required this.date,
     required this.time,
+    required this.totalDuration,
+    required this.totalPrice,
     required this.selectedEmployee,
     required this.selectedTimeSlots,
   });
@@ -56,197 +60,199 @@ class BookingConfirmationScreen extends StatelessWidget {
         '${time.hour + (time.minute + totalDuration) ~/ 60}:${(time.minute + totalDuration) % 60}'
             .padLeft(2, '0');
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Center(
-              child: Text(
-                'VIVORA',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+    return SafeArea(
+      child: Scaffold(
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Center(
+                child: Text(
+                  'VIVORA',
+                  style: TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
-            ),
-            SizedBox(height: 20),
-
-            // Confirmation Icon
-            Center(
-              child: Icon(Icons.check_circle, color: Colors.green, size: 80),
-            ),
-            SizedBox(height: 10),
-
-            // Confirmation Text
-            Center(
-              child: Text(
-                'Booking Confirmed!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              SizedBox(height: 20),
+      
+              // Confirmation Icon
+              Center(
+                child: Icon(Icons.check_circle, color: Colors.green, size: 80),
               ),
-            ),
-            SizedBox(height: 30),
-
-            // Salon Info Card
-            Card(
-              elevation: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            'images/salon.jpg',
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
+              SizedBox(height: 10),
+      
+              // // Confirmation Text
+              // Center(
+              //   child: Text(
+              //     'Booking Confirmed!',
+              //     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              //   ),
+              // ),
+              // SizedBox(height: 30),
+      
+              // Salon Info Card
+              Card(
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.asset(
+                              'images/salon.jpg',
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                salonName,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  salonName,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 4),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Colombo',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+      
+                      // Services Section
+                      Text(
+                        'Services Booked:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      ...selectedServices.map(
+                        (service) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(service),
                               Text(
-                                'Colombo',
-                                style: TextStyle(color: Colors.grey),
+                                'Rs ${servicePrices[service]?.toStringAsFixed(2)}',
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                    SizedBox(height: 16),
-
-                    // Services Section
-                    Text(
-                      'Services Booked:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    ...selectedServices.map(
-                      (service) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(service),
-                            Text(
-                              'Rs ${servicePrices[service]?.toStringAsFixed(2)}',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            // Booking Details Card
-            Card(
-              elevation: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Booking Details',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-
-                    // Employee
-                    _buildDetailRow('Employee', selectedEmployee),
-                    SizedBox(height: 8),
-
-                    // Date
-                    _buildDetailRow('Date', formattedDate),
-                    SizedBox(height: 8),
-
-                    // Time Slot
-                    _buildDetailRow(
-                      'Time Slot',
-                      '$startTime - $endTime ($totalDuration mins)',
-                    ),
-                    SizedBox(height: 8),
-
-                    // Payment Method
-                    _buildDetailRow('Payment Method', 'Pay at Salon'),
-                    SizedBox(height: 16),
-
-                    // Total Price
-                    Divider(),
-                    SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Total Amount',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          'Rs ${totalPrice.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 30),
-
-            // Action Buttons
-            Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomeScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                    minimumSize: Size(double.infinity, 50),
+                    ],
                   ),
-                  child: Text('BACK TO HOME'),
                 ),
-              ],
-            ),
-          ],
+              ),
+              SizedBox(height: 20),
+      
+              // Booking Details Card
+              Card(
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Booking Details',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+      
+                      // Employee
+                      _buildDetailRow('Employee', selectedEmployee),
+                      SizedBox(height: 8),
+      
+                      // Date
+                      _buildDetailRow('Date', formattedDate),
+                      SizedBox(height: 8),
+      
+                      // Time Slot
+                      _buildDetailRow(
+                        'Time Slot',
+                        '$startTime - $endTime ($totalDuration mins)',
+                      ),
+                      SizedBox(height: 8),
+      
+                      // Payment Method
+                      _buildDetailRow('Payment Method', 'Pay at Salon'),
+                      SizedBox(height: 16),
+      
+                      // Total Price
+                      Divider(),
+                      SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Amount',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Rs ${totalPrice.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 30),
+      
+              // Action Buttons
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      minimumSize: Size(double.infinity, 50),
+                    ),
+                    child: Text('CONFIRM BOOKING'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

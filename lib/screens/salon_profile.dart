@@ -391,11 +391,19 @@ class _SalonProfileState extends State<SalonProfile> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 onPressed: selectedServices.values.contains(true) ? () {
+                  final selectedServicesList = allServices
+                    .where((service) => selectedServices[service['service_name']] == true)
+                    .toList();
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => BookingScreen(
-                        salonName: salonData?['salon_name'] ?? widget.salonName,
+                       salonId: widget.salonId,
+                       salonName: salonData?['salon_name'] ?? widget.salonName,
+                       selectedServices: selectedServicesList,
+                       totalCost: totalCost,
+                       totalDuration: totalDuration,
+                       salonData: salonData,
                       ),
                     ),
                   );

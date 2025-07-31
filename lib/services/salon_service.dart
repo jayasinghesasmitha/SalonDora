@@ -155,4 +155,104 @@ class SalonService {
       throw Exception('Error fetching salon services: $e');
     }
   }
+
+  // Get eligible stylists for selected services
+  Future<List<Map<String, dynamic>>> getEligibleStylists(
+    String salonId, 
+    List<String> serviceIds
+  ) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.post(
+        '$baseUrl/bookings/eligible-stylists',
+        data: {
+          'salonId': salonId,
+          'serviceIds': serviceIds,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.data['success'] == true) {
+        final List<dynamic> stylists = response.data['data'];
+        return stylists.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to fetch eligible stylists');
+      }
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getEligibleStylists(salonId, serviceIds); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Invalid salon ID or service IDs');
+      }
+      throw Exception('Error fetching eligible stylists: $e');
+    }
+  }
+
+  // Get available time slots for selected services, stylist, salon and date
+  Future<List<Map<String, dynamic>>> getAvailableTimeSlots({
+    required List<String> serviceIds,
+    required String stylistId,
+    required String salonId,
+    required String date, // Format: YYYY-MM-DD
+  }) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.post(
+        '$baseUrl/salons/available-time-slots',
+        data: {
+          'service_ids': serviceIds,
+          'stylist_id': stylistId,
+          'salon_id': salonId,
+          'date': date,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.data['success'] == true) {
+        final List<dynamic> timeSlots = response.data['data'];
+        return timeSlots.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to fetch available time slots');
+      }
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getAvailableTimeSlots(
+            serviceIds: serviceIds,
+            stylistId: stylistId,
+            salonId: salonId,
+            date: date,
+          ); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Invalid input parameters for time slots');
+      }
+      throw Exception('Error fetching available time slots: $e');
+    }
+  }
+
 }
