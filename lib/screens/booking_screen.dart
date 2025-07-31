@@ -5,6 +5,7 @@ import 'package:book_my_salon/services/salon_service.dart';
 import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:book_my_salon/services/booking_storage_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String salonId;
@@ -481,70 +482,118 @@ class _BookingScreenState extends State<BookingScreen> {
               SizedBox(height: 24),
               
               // Confirm Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
-                      ? () async {
-                          setState(() {
-                            isConfirmed = true;
-                          });
-                          
-                          final authService = Provider.of<AuthService>(context, listen: false);
-                          final isLoggedIn = await authService.isLoggedIn();
-            
-                          if (isLoggedIn) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookingConfirmationScreen(
+             SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
+                        ? () async {
+                            setState(() {
+                              isConfirmed = true;
+                            });
+                            
+                            final authService = Provider.of<AuthService>(context, listen: false);
+                            final isLoggedIn = await authService.isLoggedIn();
+
+                            if (isLoggedIn) {
+                              // User is logged in, proceed directly to confirmation
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BookingConfirmationScreen(
+                                    salonId: widget.salonId,
+                                    salonName: widget.salonName,
+                                    stylistId: selectedStylistId!,
+                                    stylistName: selectedStylistName,
+                                    selectedServices: widget.selectedServices,
+                                    service: widget.selectedServices
+                                        .map((s) => s['service_name'])
+                                        .join(', '),
+                                    date: selectedDate!,
+                                    time: TimeOfDay(
+                                      hour: DateTime.parse(selectedTimeSlots.first['start']).hour,
+                                      minute: DateTime.parse(selectedTimeSlots.first['start']).minute,
+                                    ),
+                                    selectedEmployee: selectedStylistName,
+                                    selectedTimeSlots: selectedTimeSlots.map((slot) => _formatTimeSlot(slot)).toList(),
+                                    totalDuration: widget.totalDuration,
+                                    totalPrice: widget.totalCost,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // User is not logged in, store booking data and redirect to login
+                              try {
+                                await BookingStorageService.storePendingBooking(
                                   salonId: widget.salonId,
                                   salonName: widget.salonName,
                                   stylistId: selectedStylistId!,
                                   stylistName: selectedStylistName,
                                   selectedServices: widget.selectedServices,
-                                  service: widget.selectedServices
-                                      .map((s) => s['service_name'])
-                                      .join(', '),
                                   date: selectedDate!,
-                                  time: TimeOfDay(
-                                    hour: DateTime.parse(selectedTimeSlots.first['start']).hour,
-                                    minute: DateTime.parse(selectedTimeSlots.first['start']).minute,
-                                  ),
-                                  selectedEmployee: selectedStylistName,
-                                  selectedTimeSlots: selectedTimeSlots.map((slot) => _formatTimeSlot(slot)).toList(),
+                                  timeSlot: selectedTimeSlots.first, // Store the first selected time slot
                                   totalDuration: widget.totalDuration,
                                   totalPrice: widget.totalCost,
-                                ),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => LoginScreen()),
-                            );
+                                );
+
+                                // Show message to user
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Please login to complete your booking'),
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                );
+
+                                // Navigate to login screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LoginScreen(
+                                      fromBooking: true, // Flag to indicate this came from booking
+                                    ),
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error storing booking data: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                            
+                            setState(() {
+                              isConfirmed = false;
+                            });
                           }
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    selectedTimeSlots.isEmpty 
-                        ? 'Select Time Slot to Continue'
-                        : 'Proceed to Confirmation',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    child: Text(
+                      selectedTimeSlots.isEmpty 
+                          ? 'Select Time Slot to Continue'
+                          : 'Proceed to Confirmation',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ),
+              
+              SizedBox(height: 24),
+              
+              // Note about booking confirmation
+              Text(
+                'Note: You can change your booking details later in the app.',
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),    
             ],
           ),
         ),

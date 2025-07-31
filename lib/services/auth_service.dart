@@ -27,10 +27,7 @@ class AuthService {
     try {
       final response = await _dio.post(
         '$baseUrl/auth/login',
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
       if (response.statusCode == 200) {
@@ -43,14 +40,16 @@ class AuthService {
         } else {
           throw Exception('Invalid response format: access_token is null');
         }
-        
+
         return data;
       } else {
         throw Exception(response.data['error'] ?? 'Login failed');
       }
     } catch (e) {
       if (e is DioException) {
-        throw Exception('Login error: ${e.response?.data['error'] ?? e.message}');
+        throw Exception(
+          'Login error: ${e.response?.data['error'] ?? e.message}',
+        );
       }
       throw Exception('Login error: $e');
     }
@@ -88,18 +87,20 @@ class AuthService {
       };
 
       final response = await _dio.post(
-        '$baseUrl/auth/register',
+        '$baseUrl/auth/register-customer',
         data: body,
       );
-
-      if (response.statusCode == 201) {
+      print("Response code = ${response.statusCode}");
+      if (response.statusCode == 200) {
         return response.data;
       } else {
         throw Exception(response.data['error'] ?? 'Registration failed');
       }
     } catch (e) {
       if (e is DioException) {
-        throw Exception('Registration error: ${e.response?.data['error'] ?? e.message}');
+        throw Exception(
+          'Registration error: ${e.response?.data['error'] ?? e.message}',
+        );
       }
       throw Exception('Registration error: $e');
     }
@@ -109,13 +110,11 @@ class AuthService {
   Future<void> signOut() async {
     try {
       final token = await getAccessToken();
-      
+
       await _dio.post(
         '$baseUrl/auth/logout',
         options: Options(
-          headers: {
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         ),
       );
 
@@ -160,18 +159,20 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        
+
         // Update stored access token
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('access_token', data['session']['access_token']);
-        
+
         return data;
       } else {
         throw Exception(response.data['error'] ?? 'Token refresh failed');
       }
     } catch (e) {
       if (e is DioException) {
-        throw Exception('Token refresh error: ${e.response?.data['error'] ?? e.message}');
+        throw Exception(
+          'Token refresh error: ${e.response?.data['error'] ?? e.message}',
+        );
       }
       throw Exception('Token refresh error: $e');
     }
@@ -185,11 +186,7 @@ class AuthService {
 
       final response = await _dio.get(
         '$baseUrl/auth/user',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.statusCode == 200) {
