@@ -3,7 +3,9 @@ import 'package:book_my_salon/screens/booking_screen.dart';
 import 'package:book_my_salon/screens/booking_history.dart';
 import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:book_my_salon/screens/user_profile.dart';
+import 'package:book_my_salon/screens/auth/login_screen.dart'; // Add this import
 import 'package:book_my_salon/services/salon_service.dart';
+import 'package:book_my_salon/services/auth_service.dart'; // Add this import
 import 'package:intl/intl.dart';
 
 class CurrentBooking extends StatefulWidget {
@@ -17,11 +19,45 @@ class _CurrentBookingState extends State<CurrentBooking> {
   List<Map<String, dynamic>> bookings = [];
   bool isLoading = true;
   String? errorMessage;
+  bool isLoggedIn = false; // Add this flag
 
   @override
   void initState() {
     super.initState();
-    _loadBookings();
+    _checkAuthAndLoadBookings();
+  }
+
+  // Check authentication first, then load bookings
+  Future<void> _checkAuthAndLoadBookings() async {
+    try {
+      setState(() {
+        isLoading = true;
+        errorMessage = null;
+      });
+
+      // Check if user is logged in
+      final authStatus = await AuthService().isLoggedIn();
+      
+      if (!authStatus) {
+        setState(() {
+          isLoggedIn = false;
+          isLoading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        isLoggedIn = true;
+      });
+
+      // If logged in, load bookings
+      await _loadBookings();
+    } catch (e) {
+      setState(() {
+        isLoggedIn = false;
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadBookings() async {
@@ -38,13 +74,44 @@ class _CurrentBookingState extends State<CurrentBooking> {
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        errorMessage = e.toString().replaceAll('Exception: ', '');
-        isLoading = false;
-      });
+      // Check if it's an authentication error
+      if (e.toString().contains('Authentication failed') || 
+          e.toString().contains('Please login again')) {
+        setState(() {
+          isLoggedIn = false;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = e.toString().replaceAll('Exception: ', '');
+          isLoading = false;
+        });
+      }
     }
   }
 
+  // Refresh method that checks auth status
+  Future<void> _refreshBookings() async {
+    await _checkAuthAndLoadBookings();
+  }
+
+  // Navigate to login screen
+  void _navigateToLogin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginScreen(
+          fromBooking: false,
+        ),
+      ),
+    ).then((_) {
+      // Refresh when user comes back from login
+      _checkAuthAndLoadBookings();
+    });
+  }
+
+  // ...existing methods remain the same...
+  
   // Check if booking can be cancelled based on business rules
   bool _canCancelBooking(Map<String, dynamic> booking) {
     try {
@@ -375,7 +442,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: Colors.black),
-            onPressed: _loadBookings,
+            onPressed: _refreshBookings, // Updated to use the new refresh method
           ),
         ],
       ),
@@ -394,42 +461,45 @@ class _CurrentBookingState extends State<CurrentBooking> {
             ),
             const SizedBox(height: 16),
 
-            // Loading, Error, or Content
+            // Loading, Error, Login Required, or Content
             Expanded(
               child: isLoading
                   ? Center(child: CircularProgressIndicator())
-                  : errorMessage != null
-                  ? _buildErrorWidget()
-                  : bookings.isEmpty
-                  ? _buildEmptyWidget()
-                  : _buildBookingsList(),
+                  : !isLoggedIn
+                      ? _buildLoginRequiredWidget() // New widget for login required
+                      : errorMessage != null
+                          ? _buildErrorWidget()
+                          : bookings.isEmpty
+                              ? _buildEmptyWidget()
+                              : _buildBookingsList(),
             ),
 
-            // View Booking History Button
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => BookingHistory()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[200],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+            // View Booking History Button - only show if logged in
+            if (isLoggedIn)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => BookingHistory()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[200],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    'View Booking History',
-                    style: TextStyle(color: Colors.black),
+                    child: const Text(
+                      'View Booking History',
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -471,6 +541,59 @@ class _CurrentBookingState extends State<CurrentBooking> {
               break;
           }
         },
+      ),
+    );
+  }
+
+  // New widget for when user is not logged in
+  Widget _buildLoginRequiredWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.login, size: 64, color: Colors.blue),
+          SizedBox(height: 16),
+          Text(
+            'Login Required',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Please login to view your ongoing bookings',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _navigateToLogin,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: Icon(Icons.login),
+            label: Text(
+              'Login',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => HomeScreen()),
+              );
+            },
+            child: Text(
+              'Browse Salons',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ),
+        ],
       ),
     );
   }
