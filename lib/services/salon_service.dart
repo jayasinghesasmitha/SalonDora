@@ -255,4 +255,55 @@ class SalonService {
     }
   }
 
+  Future<Map<String, dynamic>> createBooking({
+    required String stylistId,
+    required List<String> serviceIds,
+    required String bookingStartDateTime, // ISO format: "2025-07-31T10:00:00Z"
+    String? notes,
+  }) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.post(
+        '$baseUrl/bookings',
+        data: {
+          'stylist_id': stylistId,
+          'service_ids': serviceIds,
+          'booking_start_datetime': bookingStartDateTime,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return createBooking(
+            stylistId: stylistId,
+            serviceIds: serviceIds,
+            bookingStartDateTime: bookingStartDateTime,
+            notes: notes,
+          ); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Invalid booking data: ${e.response?.data['error'] ?? 'Bad request'}');
+      }
+      if (e is DioException && e.response?.statusCode == 500) {
+        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+      }
+      throw Exception('Error creating booking: $e');
+    }
+  }
+
 }

@@ -498,7 +498,11 @@ class _BookingScreenState extends State<BookingScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => BookingConfirmationScreen(
+                                  salonId: widget.salonId,
                                   salonName: widget.salonName,
+                                  stylistId: selectedStylistId!,
+                                  stylistName: selectedStylistName,
+                                  selectedServices: widget.selectedServices,
                                   service: widget.selectedServices
                                       .map((s) => s['service_name'])
                                       .join(', '),
