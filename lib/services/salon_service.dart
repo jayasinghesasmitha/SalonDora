@@ -306,4 +306,121 @@ class SalonService {
     }
   }
 
+  // Get current user bookings
+  Future<List<Map<String, dynamic>>> getUserBookings() async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.get(
+        '$baseUrl/bookings',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data);
+      } else {
+        throw Exception('Unexpected response format');
+      }
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getUserBookings(); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
+      }
+      if (e is DioException && e.response?.statusCode == 500) {
+        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+      }
+      throw Exception('Error fetching bookings: $e');
+    }
+  }
+
+  // Cancel a booking
+  Future<Map<String, dynamic>> cancelBooking(String bookingId) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.put(  
+        '$baseUrl/bookings/$bookingId/cancel',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return cancelBooking(bookingId); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('${e.response?.data['error'] ?? 'Cannot cancel booking'}');
+      }
+      if (e is DioException && e.response?.statusCode == 404) {
+        throw Exception('Booking not found or cannot be cancelled');
+      }
+      if (e is DioException && e.response?.statusCode == 500) {
+        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+      }
+      throw Exception('Error cancelling booking: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getBookingHistory({int page = 1, int limit = 10}) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.get(
+        '$baseUrl/bookings/history',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getBookingHistory(page: page, limit: limit); // Retry with new token
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
+      }
+      if (e is DioException && e.response?.statusCode == 500) {
+        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
+      }
+      throw Exception('Error fetching booking history: $e');
+    }
+  }
 }
