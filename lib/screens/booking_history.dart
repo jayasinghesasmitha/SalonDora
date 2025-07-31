@@ -19,13 +19,13 @@ class _BookingHistoryState extends State<BookingHistory> {
   bool isLoadingMore = false;
   String? errorMessage;
   bool isLoggedIn = false;
-  
+
   // Pagination variables
   int currentPage = 1;
   int totalPages = 1;
   bool hasMorePages = false;
   final int itemsPerPage = 10;
-  
+
   // Scroll controller for pagination
   final ScrollController _scrollController = ScrollController();
 
@@ -52,7 +52,7 @@ class _BookingHistoryState extends State<BookingHistory> {
 
       // Check if user is logged in
       final authStatus = await AuthService().isLoggedIn();
-      
+
       if (!authStatus) {
         setState(() {
           isLoggedIn = false;
@@ -94,22 +94,44 @@ class _BookingHistoryState extends State<BookingHistory> {
         limit: itemsPerPage,
       );
 
-      final fetchedBookings = List<Map<String, dynamic>>.from(response['data'] ?? []);
+      final fetchedBookings = List<Map<String, dynamic>>.from(
+        response['data'] ?? [],
+      );
+
+      // Process the bookings to extract review data properly
+      final processedBookings = fetchedBookings.map((booking) {
+        final reviews = booking['customer_reviews'] as List<dynamic>?;
+
+        if (reviews != null && reviews.isNotEmpty) {
+          final review = reviews.first as Map<String, dynamic>;
+          booking['review_id'] = review['review_id'];
+          booking['user_rating'] = review['star_rating'];
+          booking['user_review'] = review['review_text'];
+          booking['review_created_at'] = review['created_at'];
+          booking['review_updated_at'] = review['updated_at'];
+        }
+
+        // Remove the nested customer_reviews to clean up the data structure
+        booking.remove('customer_reviews');
+
+        return booking;
+      }).toList();
+
       final pagination = response['pagination'] as Map<String, dynamic>?;
 
       setState(() {
         if (reset) {
-          bookings = fetchedBookings;
+          bookings = processedBookings;
           currentPage = 1;
         } else {
-          bookings.addAll(fetchedBookings);
+          bookings.addAll(processedBookings);
         }
-        
+
         if (pagination != null) {
           totalPages = pagination['totalPages'] ?? 1;
           hasMorePages = currentPage < totalPages;
         }
-        
+
         isLoading = false;
         isLoadingMore = false;
       });
@@ -122,7 +144,7 @@ class _BookingHistoryState extends State<BookingHistory> {
       }
     } catch (e) {
       // Check if it's an authentication error
-      if (e.toString().contains('Authentication failed') || 
+      if (e.toString().contains('Authentication failed') ||
           e.toString().contains('Please login again')) {
         setState(() {
           isLoggedIn = false;
@@ -141,7 +163,8 @@ class _BookingHistoryState extends State<BookingHistory> {
 
   // Handle scroll for pagination
   void _onScroll() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
       if (hasMorePages && !isLoadingMore) {
         currentPage++;
         _loadBookingHistory();
@@ -158,9 +181,7 @@ class _BookingHistoryState extends State<BookingHistory> {
   void _navigateToLogin() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => LoginScreen(fromBooking: false),
-      ),
+      MaterialPageRoute(builder: (context) => LoginScreen(fromBooking: false)),
     ).then((_) {
       // Refresh when user comes back from login
       _checkAuthAndLoadHistory();
@@ -169,11 +190,13 @@ class _BookingHistoryState extends State<BookingHistory> {
 
   void _showUnratedBookingsPopup() {
     final unratedBookings = bookings
-        .where((booking) => 
-            booking['status']?.toString().toLowerCase() == 'completed' &&
-            (booking['user_rating'] == null || booking['user_rating'] == 0))
+        .where(
+          (booking) =>
+              booking['status']?.toString().toLowerCase() == 'completed' &&
+              (booking['user_rating'] == null || booking['user_rating'] == 0),
+        )
         .toList();
-        
+
     if (unratedBookings.isNotEmpty) {
       showDialog(
         context: context,
@@ -188,10 +211,7 @@ class _BookingHistoryState extends State<BookingHistory> {
                 SizedBox(width: 8),
                 Text(
                   'Rate Your Experience',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -206,10 +226,7 @@ class _BookingHistoryState extends State<BookingHistory> {
                 SizedBox(height: 8),
                 Text(
                   'Your feedback helps us improve our services!',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -240,16 +257,25 @@ class _BookingHistoryState extends State<BookingHistory> {
   // Check if booking can be rated
   bool _canRateBooking(Map<String, dynamic> booking) {
     final status = booking['status']?.toString().toLowerCase();
-    return status == 'completed' && 
-           (booking['user_rating'] == null || booking['user_rating'] == 0);
+    final userRating = booking['user_rating'];
+
+    // Can only rate completed bookings that haven't been rated yet
+    return status == 'completed' && (userRating == null || userRating == 0);
   }
 
-  // Show rating dialog
-  void _showRatingDialog(Map<String, dynamic> booking) {
+  bool _hasReview(Map<String, dynamic> booking) {
+    final userRating = booking['user_rating'];
+    return userRating != null && userRating > 0;
+  }
+
+  // Show rating dialog (updated to handle both create and edit)
+  void _showRatingDialog(Map<String, dynamic> booking, {bool isEdit = false}) {
     final salon = booking['salon'] as Map<String, dynamic>?;
-    double rating = 0.0;
-    String reviewText = '';
-    final reviewController = TextEditingController();
+    double rating = isEdit ? (booking['user_rating']?.toDouble() ?? 0.0) : 0.0;
+    String reviewText = isEdit
+        ? (booking['user_review']?.toString() ?? '')
+        : '';
+    final reviewController = TextEditingController(text: reviewText);
 
     showDialog(
       context: context,
@@ -264,11 +290,8 @@ class _BookingHistoryState extends State<BookingHistory> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Rate Your Experience',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    isEdit ? 'Edit Your Review' : 'Rate Your Experience',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -297,7 +320,9 @@ class _BookingHistoryState extends State<BookingHistory> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _formatDate(booking['booking_start_datetime'] ?? ''),
+                            _formatDate(
+                              booking['booking_start_datetime'] ?? '',
+                            ),
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
@@ -319,7 +344,7 @@ class _BookingHistoryState extends State<BookingHistory> {
                       ),
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Star rating
                     Text(
                       'Rate your experience:',
@@ -341,13 +366,15 @@ class _BookingHistoryState extends State<BookingHistory> {
                           child: Icon(
                             Icons.star,
                             size: 40,
-                            color: index < rating ? Colors.amber : Colors.grey[300],
+                            color: index < rating
+                                ? Colors.amber
+                                : Colors.grey[300],
                           ),
                         );
                       }),
                     ),
                     SizedBox(height: 16),
-                    
+
                     // Review text
                     Text(
                       'Write a review (optional):',
@@ -380,15 +407,21 @@ class _BookingHistoryState extends State<BookingHistory> {
                   child: Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: rating > 0 ? () {
-                    Navigator.of(context).pop();
-                    _submitRating(booking, rating, reviewText);
-                  } : null,
+                  onPressed: rating > 0
+                      ? () {
+                          Navigator.of(context).pop();
+                          if (isEdit) {
+                            _updateRating(booking, rating, reviewText);
+                          } else {
+                            _submitRating(booking, rating, reviewText);
+                          }
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
                     foregroundColor: Colors.white,
                   ),
-                  child: Text('Submit Rating'),
+                  child: Text(isEdit ? 'Update Review' : 'Submit Rating'),
                 ),
               ],
             );
@@ -399,7 +432,11 @@ class _BookingHistoryState extends State<BookingHistory> {
   }
 
   // Submit rating
-  Future<void> _submitRating(Map<String, dynamic> booking, double rating, String reviewText) async {
+  Future<void> _submitRating(
+    Map<String, dynamic> booking,
+    double rating,
+    String reviewText,
+  ) async {
     try {
       // Show loading dialog
       showDialog(
@@ -420,7 +457,7 @@ class _BookingHistoryState extends State<BookingHistory> {
         ),
       );
 
-      await ReviewService().createReview(
+      final result = await ReviewService().createReview(
         bookingId: booking['booking_id'].toString(),
         salonId: booking['salon_id'].toString(),
         starRating: rating,
@@ -432,10 +469,16 @@ class _BookingHistoryState extends State<BookingHistory> {
 
       // Update local booking data
       setState(() {
-        final index = bookings.indexWhere((b) => b['booking_id'] == booking['booking_id']);
+        final index = bookings.indexWhere(
+          (b) => b['booking_id'] == booking['booking_id'],
+        );
         if (index != -1) {
           bookings[index]['user_rating'] = rating;
           bookings[index]['user_review'] = reviewText;
+          // Store review_id for future edits if returned from backend
+          if (result['data'] != null && result['data']['review_id'] != null) {
+            bookings[index]['review_id'] = result['data']['review_id'];
+          }
         }
       });
 
@@ -458,7 +501,9 @@ class _BookingHistoryState extends State<BookingHistory> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to submit review: ${e.toString().replaceAll('Exception: ', '')}'),
+          content: Text(
+            'Failed to submit review: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 4),
         ),
@@ -466,7 +511,86 @@ class _BookingHistoryState extends State<BookingHistory> {
     }
   }
 
-  // ...existing helper methods remain the same...
+  // Update rating (new method)
+  Future<void> _updateRating(
+    Map<String, dynamic> booking,
+    double rating,
+    String reviewText,
+  ) async {
+    try {
+      final reviewId = booking['review_id']?.toString();
+
+      if (reviewId == null) {
+        throw Exception('Review ID not found');
+      }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Updating your review...',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await ReviewService().updateReview(
+        reviewId: reviewId,
+        starRating: rating,
+        reviewText: reviewText.isNotEmpty ? reviewText : null,
+      );
+
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      // Update local booking data
+      setState(() {
+        final index = bookings.indexWhere(
+          (b) => b['booking_id'] == booking['booking_id'],
+        );
+        if (index != -1) {
+          bookings[index]['user_rating'] = rating;
+          bookings[index]['user_review'] = reviewText;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Review updated successfully!'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update review: ${e.toString().replaceAll('Exception: ', '')}',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    }
+  }
 
   String _formatDate(String dateTimeString) {
     try {
@@ -560,20 +684,20 @@ class _BookingHistoryState extends State<BookingHistory> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Loading, Error, Login Required, or Content
             Expanded(
               child: isLoading
                   ? Center(child: CircularProgressIndicator())
                   : !isLoggedIn
-                      ? _buildLoginRequiredWidget()
-                      : errorMessage != null
-                          ? _buildErrorWidget()
-                          : bookings.isEmpty
-                              ? _buildEmptyWidget()
-                              : _buildHistoryList(),
+                  ? _buildLoginRequiredWidget()
+                  : errorMessage != null
+                  ? _buildErrorWidget()
+                  : bookings.isEmpty
+                  ? _buildEmptyWidget()
+                  : _buildHistoryList(),
             ),
-            
+
             // Back to Bookings Button - only show if logged in
             if (isLoggedIn)
               Padding(
@@ -602,8 +726,6 @@ class _BookingHistoryState extends State<BookingHistory> {
       ),
     );
   }
-
-  // ...existing widget methods remain the same until _buildHistoryList...
 
   // Login required widget
   Widget _buildLoginRequiredWidget() {
@@ -724,6 +846,7 @@ class _BookingHistoryState extends State<BookingHistory> {
         final salon = booking['salon'] as Map<String, dynamic>?;
         final stylist = booking['stylist'] as Map<String, dynamic>?;
         final canRate = _canRateBooking(booking);
+        final hasReview = _hasReview(booking);
         final userRating = booking['user_rating']?.toDouble() ?? 0.0;
 
         return Card(
@@ -796,9 +919,14 @@ class _BookingHistoryState extends State<BookingHistory> {
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(booking['status'] ?? 'completed'),
+                            color: _getStatusColor(
+                              booking['status'] ?? 'completed',
+                            ),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -815,7 +943,7 @@ class _BookingHistoryState extends State<BookingHistory> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Date and Time
                 Text(
                   _formatDate(booking['booking_start_datetime'] ?? ''),
@@ -831,12 +959,9 @@ class _BookingHistoryState extends State<BookingHistory> {
                     booking['booking_start_datetime'] ?? '',
                     booking['booking_end_datetime'],
                   ),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.black),
                 ),
-                
+
                 // Duration
                 if (booking['total_duration_minutes'] != null)
                   Padding(
@@ -849,9 +974,10 @@ class _BookingHistoryState extends State<BookingHistory> {
                       ),
                     ),
                   ),
-                
+
                 // Notes if available
-                if (booking['notes'] != null && booking['notes'].toString().isNotEmpty)
+                if (booking['notes'] != null &&
+                    booking['notes'].toString().isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Container(
@@ -877,108 +1003,143 @@ class _BookingHistoryState extends State<BookingHistory> {
                       ),
                     ),
                   ),
-                
+
                 const SizedBox(height: 16),
-                
-                // Rating Section
+
+                // Rating Section - Fixed logic
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (userRating > 0) ...[
-                      // Show existing rating
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Your Rating:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Row(
-                                children: List.generate(5, (starIndex) {
-                                  return Icon(
-                                    Icons.star,
-                                    size: 16,
-                                    color: starIndex < userRating ? Colors.amber : Colors.grey[300],
-                                  );
-                                }),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                '${userRating.toStringAsFixed(1)}/5',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (booking['user_review'] != null && booking['user_review'].toString().isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                '"${booking['user_review']}"',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
+                    if (hasReview) ...[
+                      // Show existing rating with edit option
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Your Rating:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
                             ),
-                        ],
+                            Row(
+                              children: [
+                                Row(
+                                  children: List.generate(5, (starIndex) {
+                                    return Icon(
+                                      Icons.star,
+                                      size: 16,
+                                      color: starIndex < userRating
+                                          ? Colors.amber
+                                          : Colors.grey[300],
+                                    );
+                                  }),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  '${userRating.toStringAsFixed(1)}/5',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (booking['user_review'] != null &&
+                                booking['user_review'].toString().isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  '"${booking['user_review']}"',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.grey[600],
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // Edit button
+                      ElevatedButton.icon(
+                        onPressed: () =>
+                            _showRatingDialog(booking, isEdit: true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: Icon(Icons.edit, size: 16),
+                        label: Text('Edit', style: TextStyle(fontSize: 12)),
                       ),
                     ] else if (canRate) ...[
                       // Show rate button for completed unrated bookings
-                      Row(
-                        children: [
-                          Icon(Icons.star_border, color: Colors.amber, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Rate your experience',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.star_border,
+                              color: Colors.amber,
+                              size: 20,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 8),
+                            Text(
+                              'Rate your experience',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       ElevatedButton.icon(
                         onPressed: () => _showRatingDialog(booking),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.amber,
                           foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         icon: Icon(Icons.star, size: 16),
-                        label: Text(
-                          'Rate Now',
-                          style: TextStyle(fontSize: 12),
-                        ),
+                        label: Text('Rate Now', style: TextStyle(fontSize: 12)),
                       ),
                     ] else ...[
                       // Show status message for non-completed bookings
                       Row(
                         children: [
-                          Icon(Icons.info_outline, color: Colors.grey, size: 16),
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.grey,
+                            size: 16,
+                          ),
                           SizedBox(width: 8),
                           Text(
-                            booking['status']?.toString().toLowerCase() == 'cancelled'
+                            booking['status']?.toString().toLowerCase() ==
+                                    'cancelled'
                                 ? 'Booking was cancelled'
-                                : booking['status']?.toString().toLowerCase() == 'no_show'
-                                    ? 'Marked as no-show'
-                                    : 'Rating not available',
+                                : booking['status']?.toString().toLowerCase() ==
+                                      'no_show'
+                                ? 'Marked as no-show'
+                                : 'Rating not available',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
