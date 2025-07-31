@@ -1,4 +1,4 @@
-# book_my_saloon
+# book_my_salon
 
 A new Flutter project.
 
