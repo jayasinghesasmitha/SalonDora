@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:book_my_salon/services/auth_service.dart';
+import 'dart:typed_data';
 
 class SalonService {
   static SalonService? _instance;
@@ -472,36 +473,65 @@ class SalonService {
     }
   }
 
-  // Parse location from PostgreSQL geography format
-  static Map<String, double>? parseLocationFromGeography(String? locationString) {
-    if (locationString == null || locationString.isEmpty) return null;
+  // // Parse location from PostgreSQL geography format
+  // static Map<String, double>? parseLocationFromGeography(String? locationString) {
+  //   if (locationString == null || locationString.isEmpty) return null;
     
-    try {
-      // Remove the SRID prefix if present (e.g., "0101000020E6100000...")
-      String hexString = locationString;
+  //   try {
+  //     // Remove the SRID prefix if present (e.g., "0101000020E6100000...")
+  //     String hexString = locationString;
       
-      // If it starts with SRID info, extract just the geometry part
-      if (hexString.length > 8) {
-        // Skip SRID (first 8 chars) and endianness/type (next 8 chars)
-        hexString = hexString.substring(16);
-      }
+  //     // If it starts with SRID info, extract just the geometry part
+  //     if (hexString.length > 8) {
+  //       // Skip SRID (first 8 chars) and endianness/type (next 8 chars)
+  //       hexString = hexString.substring(16);
+  //     }
       
-      // Parse the hex string to get coordinates
-      // This is a simplified parser - you might need to adjust based on your exact format
-      if (hexString.length >= 32) {
-        // Extract longitude (first 8 bytes) and latitude (next 8 bytes) in hex
-        final lngHex = hexString.substring(0, 16);
-        final latHex = hexString.substring(16, 32);
+  //     // Parse the hex string to get coordinates
+  //     // This is a simplified parser - you might need to adjust based on your exact format
+  //     if (hexString.length >= 32) {
+  //       // Extract longitude (first 8 bytes) and latitude (next 8 bytes) in hex
+  //       final lngHex = hexString.substring(0, 16);
+  //       final latHex = hexString.substring(16, 32);
         
-        // Convert hex to double (this is simplified - actual parsing is more complex)
-        // For now, let's use a different approach with the database function
-        return null; // We'll handle this in the backend instead
-      }
+  //       // Convert hex to double (this is simplified - actual parsing is more complex)
+  //       // For now, let's use a different approach with the database function
+  //       return null; // We'll handle this in the backend instead
+  //     }
       
-      return null;
+  //     return null;
+  //   } catch (e) {
+  //     print('Error parsing location: $e');
+  //     return null;
+  //   }
+  // }
+
+
+  Map<String, double>? parseLocationFromGeography(String? locationString) {
+    if (locationString == null || locationString.isEmpty) return null;
+
+    try {
+      // Convert hex string to bytes
+      final bytes = Uint8List.fromList(
+        List.generate(locationString.length ~/ 2,
+          (i) => int.parse(locationString.substring(i * 2, i * 2 + 2), radix: 16),
+        ),
+      );
+
+      final byteData = ByteData.sublistView(bytes);
+
+      // Read float64 values from byte offset 9 and 17 (little endian)
+      final lng = byteData.getFloat64(9, Endian.little);
+      final lat = byteData.getFloat64(17, Endian.little);
+
+      return {
+        'lat': lat,
+        'lng': lng,
+      };
     } catch (e) {
       print('Error parsing location: $e');
       return null;
     }
   }
+
 }

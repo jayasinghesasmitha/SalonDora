@@ -23,7 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> _allSalons = [];
   List<Map<String, dynamic>> _displayedSalons = [];
-  List<Map<String, dynamic>> _nearbySalons = []; // Add this for location-based salons
+  List<Map<String, dynamic>> _nearbySalons =
+      []; // Add this for location-based salons
 
   final TextEditingController _searchController = TextEditingController();
   final SalonService _salonService = SalonService();
@@ -45,13 +46,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchSalons() async {
     try {
       List<Map<String, dynamic>> salons;
-
       if (_useLocationBasedSearch && _currentLocation != null) {
         // Fetch salons near current location
         salons = await _salonService.getSalonsByLocation(
           latitude: _currentLocation!.latitude,
           longitude: _currentLocation!.longitude,
           radiusMeters: 10000, // 10km radius
+        );
+
+        print(
+          'latitude: ${_currentLocation!.latitude}, longitude: ${_currentLocation!.longitude}',
         );
 
         setState(() {
@@ -157,59 +161,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // // Updated location fetching to refresh salons when location is obtained
-  // Future<void> _fetchInitialLocation() async {
-  //   try {
-  //     LocationPermission permission = await Geolocator.checkPermission();
-  //     if (permission == LocationPermission.denied) {
-  //       permission = await Geolocator.requestPermission();
-  //       if (permission == LocationPermission.denied) {
-  //         _handleLocationError();
-  //         return;
-  //       }
-  //     }
-  //     if (permission == LocationPermission.deniedForever) {
-  //       _handleLocationError();
-  //       return;
-  //     }
-
-  //     Position position = await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high,
-  //     );
-  //     setState(() {
-  //       _currentLocation = latLng.LatLng(position.latitude, position.longitude);
-  //       _isLoading = false;
-  //     });
-
-  //     // Refresh salons after getting location
-  //     if (_currentLocation != null) {
-  //       await _fetchSalons();
-  //     }
-  //   } catch (e) {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //     _handleLocationError();
-  //   }
-  // }
-
-  // FOR TESTING: Manually set location near the salon
+  // Updated location fetching to refresh salons when location is obtained
   Future<void> _fetchInitialLocation() async {
     try {
-      // FOR TESTING: Manually set location near the salon
-      // Remove this and uncomment the real location code when done testing
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _handleLocationError();
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        _handleLocationError();
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
       setState(() {
-        // Set location near the salon coordinate you provided
-        _currentLocation = latLng.LatLng(6.97, 79.91); // Decoded from your hex string
+        _currentLocation = latLng.LatLng(position.latitude, position.longitude);
         _isLoading = false;
       });
-      
-      // Refresh salons after setting location
+
+      // Refresh salons after getting location
       if (_currentLocation != null) {
         await _fetchSalons();
       }
-      return; // Remove this return when you want to use real location
-      
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -217,6 +196,33 @@ class _HomeScreenState extends State<HomeScreen> {
       _handleLocationError();
     }
   }
+
+  // // FOR TESTING: Manually set location near the salon
+  // Future<void> _fetchInitialLocation() async {
+  //   try {
+  //     // FOR TESTING: Manually set location near the salon
+  //     // Remove this and uncomment the real location code when done testing
+  //     setState(() {
+  //       // Set location near the salon coordinate you provided
+  //       _currentLocation = latLng.LatLng(
+  //         6.97,
+  //         79.91,
+  //       ); // Decoded from your hex string
+  //       _isLoading = false;
+  //     });
+
+  //     // Refresh salons after setting location
+  //     if (_currentLocation != null) {
+  //       await _fetchSalons();
+  //     }
+  //     return; // Remove this return when you want to use real location
+  //   } catch (e) {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //     _handleLocationError();
+  //   }
+  // }
 
   void _handleLocationError() {
     setState(() {
@@ -404,9 +410,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     flex: 2,
                     child: FlutterMap(
                       options: MapOptions(
-                        center:
+                        initialCenter:
                             _currentLocation ?? latLng.LatLng(6.9271, 79.8612),
-                        zoom: _useLocationBasedSearch ? 14.0 : 13.0,
+                        initialZoom: _useLocationBasedSearch ? 14.0 : 13.0,
                       ),
                       children: [
                         TileLayer(
