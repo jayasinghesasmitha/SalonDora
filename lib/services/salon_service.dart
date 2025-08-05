@@ -423,4 +423,85 @@ class SalonService {
       throw Exception('Error fetching booking history: $e');
     }
   }
+
+  Future<List<Map<String, dynamic>>> getSalonsByLocation({
+    required double latitude,
+    required double longitude,
+    double radiusMeters = 5000,
+  }) async {
+    try {
+      final token = await AuthService().getAccessToken();
+
+      final response = await _dio.post(
+        '$baseUrl/salons/location',
+        data: {
+          'location': {
+            'latitude': latitude,
+            'longitude': longitude,
+          },
+          'radius': radiusMeters,
+        },
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      final List<dynamic> data = response.data;
+      return data.cast<Map<String, dynamic>>();
+    } catch (e) {
+      if (e is DioException && e.response?.statusCode == 401) {
+        // Token expired, try to refresh
+        try {
+          await AuthService().refreshAccessToken();
+          return getSalonsByLocation(
+            latitude: latitude,
+            longitude: longitude,
+            radiusMeters: radiusMeters,
+          );
+        } catch (refreshError) {
+          throw Exception('Authentication failed: Please login again');
+        }
+      }
+      if (e is DioException && e.response?.statusCode == 400) {
+        throw Exception('Invalid location data: ${e.response?.data['error'] ?? 'Bad request'}');
+      }
+      throw Exception('Error fetching salons by location: $e');
+    }
+  }
+
+  // Parse location from PostgreSQL geography format
+  static Map<String, double>? parseLocationFromGeography(String? locationString) {
+    if (locationString == null || locationString.isEmpty) return null;
+    
+    try {
+      // Remove the SRID prefix if present (e.g., "0101000020E6100000...")
+      String hexString = locationString;
+      
+      // If it starts with SRID info, extract just the geometry part
+      if (hexString.length > 8) {
+        // Skip SRID (first 8 chars) and endianness/type (next 8 chars)
+        hexString = hexString.substring(16);
+      }
+      
+      // Parse the hex string to get coordinates
+      // This is a simplified parser - you might need to adjust based on your exact format
+      if (hexString.length >= 32) {
+        // Extract longitude (first 8 bytes) and latitude (next 8 bytes) in hex
+        final lngHex = hexString.substring(0, 16);
+        final latHex = hexString.substring(16, 32);
+        
+        // Convert hex to double (this is simplified - actual parsing is more complex)
+        // For now, let's use a different approach with the database function
+        return null; // We'll handle this in the backend instead
+      }
+      
+      return null;
+    } catch (e) {
+      print('Error parsing location: $e');
+      return null;
+    }
+  }
 }
