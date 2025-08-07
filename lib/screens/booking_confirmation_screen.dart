@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:book_my_salon/services/salon_service.dart';
+import 'package:book_my_salon/services/booking_service.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String salonId;
@@ -71,7 +72,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       final bookingStartDateTime = bookingDateTime.toUtc().toIso8601String();
 
       // Create the booking
-      final result = await SalonService().createBooking(
+      final result = await BookingService().createBooking(
         stylistId: widget.stylistId,
         serviceIds: serviceIds,
         bookingStartDateTime: bookingStartDateTime,

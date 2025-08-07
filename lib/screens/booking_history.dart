@@ -5,6 +5,7 @@ import 'package:book_my_salon/services/auth_service.dart';
 import 'package:book_my_salon/services/review_service.dart';
 import 'package:book_my_salon/screens/auth/login_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:book_my_salon/services/booking_service.dart';
 
 class BookingHistory extends StatefulWidget {
   const BookingHistory({Key? key}) : super(key: key);
@@ -89,7 +90,7 @@ class _BookingHistoryState extends State<BookingHistory> {
         });
       }
 
-      final response = await SalonService().getBookingHistory(
+      final response = await BookingService().getBookingHistory(
         page: reset ? 1 : currentPage,
         limit: itemsPerPage,
       );

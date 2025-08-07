@@ -7,6 +7,7 @@ import 'package:book_my_salon/screens/auth/login_screen.dart'; // Add this impor
 import 'package:book_my_salon/services/salon_service.dart';
 import 'package:book_my_salon/services/auth_service.dart'; // Add this import
 import 'package:intl/intl.dart';
+import 'package:book_my_salon/services/booking_service.dart'; 
 
 class CurrentBooking extends StatefulWidget {
   const CurrentBooking({Key? key}) : super(key: key);
@@ -67,7 +68,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
         errorMessage = null;
       });
 
-      final fetchedBookings = await SalonService().getUserBookings();
+      final fetchedBookings = await BookingService().getUserBookings();
 
       setState(() {
         bookings = fetchedBookings;
@@ -185,7 +186,7 @@ class _CurrentBookingState extends State<CurrentBooking> {
         ),
       );
 
-      final result = await SalonService().cancelBooking(bookingId);
+      final result = await BookingService().cancelBooking(bookingId);
 
       // Close loading dialog
       Navigator.of(context).pop();

@@ -6,6 +6,7 @@ import 'package:book_my_salon/screens/booking_confirmation_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:book_my_salon/services/booking_storage_service.dart';
+import 'package:book_my_salon/services/booking_service.dart';
 
 class BookingScreen extends StatefulWidget {
   final String salonId;
@@ -65,7 +66,7 @@ class _BookingScreenState extends State<BookingScreen> {
           .map((service) => service['service_id'].toString())
           .toList();
 
-      final stylists = await SalonService().getEligibleStylists(
+      final stylists = await BookingService().getEligibleStylists(
         widget.salonId,
         serviceIds,
       );
@@ -102,7 +103,7 @@ class _BookingScreenState extends State<BookingScreen> {
       // Format date as YYYY-MM-DD
       final formattedDate = '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
 
-      final timeSlots = await SalonService().getAvailableTimeSlots(
+      final timeSlots = await BookingService().getAvailableTimeSlots(
         serviceIds: serviceIds,
         stylistId: selectedStylistId!,
         salonId: widget.salonId,
