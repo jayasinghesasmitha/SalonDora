@@ -109,29 +109,59 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
-      final token = await getAccessToken();
-
-      await _dio.post(
-        '$baseUrl/auth/logout',
-        options: Options(
-          headers: {if (token != null) 'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      // Clear stored tokens and cookies
+      // Clear local storage first (this always succeeds)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
+      await prefs.remove('refresh_token');
       await prefs.remove('user_role');
-      _cookieJar.deleteAll(); // Clear all cookies
+      
+      // Clear cookies
+      try {
+        _cookieJar.deleteAll();
+      } catch (e) {
+        print('Failed to clear cookies: $e');
+      }
+
+      // Optional: Call backend logout (don't wait for it if it fails)
+      try {
+        final token = await getAccessToken();
+        if (token != null) {
+          await _dio.post(
+            '$baseUrl/auth/logout',
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+              sendTimeout: Duration(seconds: 5),
+              receiveTimeout: Duration(seconds: 5),
+            ),
+          ).timeout(Duration(seconds: 5));
+        }
+      } catch (e) {
+        // Ignore backend logout errors - local logout is more important
+        print('Backend logout failed (ignored): $e');
+      }
     } catch (e) {
-      // Still clear local tokens even if backend call fails
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('access_token');
-      await prefs.remove('user_role');
-      _cookieJar.deleteAll();
-      throw Exception('Logout error: $e');
+      // Even if something fails, we've cleared what we can
+      print('Logout error: $e');
     }
   }
+
+  // // Helper method to clear local authentication data
+  // Future<void> _clearLocalAuth() async {
+  //   try {
+  //     final prefs = await SharedPreferences.getInstance();
+  //     await prefs.remove('access_token');
+  //     await prefs.remove('user_role');
+      
+  //     // Clear all cookies
+  //     try {
+  //       _cookieJar.deleteAll();
+  //     } catch (e) {
+  //       print('Failed to clear cookies: $e');
+  //     }
+  //   } catch (e) {
+  //     print('Failed to clear local auth data: $e');
+  //   }
+  // }
 
   // Get current user token
   Future<String?> getAccessToken() async {
