@@ -108,12 +108,15 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      // Get the token BEFORE clearing local storage
+      final token = await getAccessToken();
+
       // Clear local storage first (this always succeeds)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
       await prefs.remove('refresh_token');
       await prefs.remove('user_role');
-      
+
       // Clear cookies
       try {
         _cookieJar.deleteAll();
@@ -123,16 +126,17 @@ class AuthService {
 
       // Optional: Call backend logout (don't wait for it if it fails)
       try {
-        final token = await getAccessToken();
         if (token != null) {
-          await _dio.post(
-            '${ApiConstants.baseUrl}/auth/logout',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: Duration(seconds: 5),
-              receiveTimeout: Duration(seconds: 5),
-            ),
-          ).timeout(Duration(seconds: 5));
+          await _dio
+              .post(
+                '${ApiConstants.baseUrl}/auth/logout',
+                options: Options(
+                  headers: {'Authorization': 'Bearer $token'},
+                  sendTimeout: Duration(seconds: 5),
+                  receiveTimeout: Duration(seconds: 5),
+                ),
+              )
+              .timeout(Duration(seconds: 5));
         }
       } catch (e) {
         // Ignore backend logout errors - local logout is more important
@@ -150,7 +154,7 @@ class AuthService {
   //     final prefs = await SharedPreferences.getInstance();
   //     await prefs.remove('access_token');
   //     await prefs.remove('user_role');
-      
+
   //     // Clear all cookies
   //     try {
   //       _cookieJar.deleteAll();
@@ -184,7 +188,9 @@ class AuthService {
   Future<Map<String, dynamic>> refreshAccessToken() async {
     try {
       // The refresh token cookie is automatically sent by dio
-      final response = await _dio.post('${ApiConstants.baseUrl}/auth/refresh-token');
+      final response = await _dio.post(
+        '${ApiConstants.baseUrl}/auth/refresh-token',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;

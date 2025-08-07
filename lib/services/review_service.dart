@@ -28,7 +28,7 @@ class ReviewService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        ApiConstants.baseUrl,
+        "${ApiConstants.baseUrl}/review",
         data: {
           'booking_id': bookingId,
           'salon_id': salonId,
@@ -87,7 +87,7 @@ class ReviewService {
       }
 
       final response = await _dio.put(
-        '$ApiConstants.baseUrl/$reviewId',
+        '${ApiConstants.baseUrl}/review/$reviewId',
         data: data,
         options: Options(
           headers: {

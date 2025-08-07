@@ -39,10 +39,10 @@ class _BookingScreenState extends State<BookingScreen> {
   bool isLoadingTimeSlots = false;
   String? stylistError;
   String? timeSlotsError;
-  
+
   List<Map<String, dynamic>> availableStylists = [];
   List<Map<String, dynamic>> availableTimeSlots = [];
-  
+
   // Calendar configuration
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
@@ -100,7 +100,8 @@ class _BookingScreenState extends State<BookingScreen> {
           .toList();
 
       // Format date as YYYY-MM-DD
-      final formattedDate = '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
+      final formattedDate =
+          '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
 
       final timeSlots = await BookingService().getAvailableTimeSlots(
         serviceIds: serviceIds,
@@ -138,7 +139,8 @@ class _BookingScreenState extends State<BookingScreen> {
     final today = DateTime.now();
     final todayStart = DateTime(today.year, today.month, today.day);
     final dateStart = DateTime(date.year, date.month, date.day);
-    return dateStart.isAfter(todayStart) || dateStart.isAtSameMomentAs(todayStart);
+    return dateStart.isAfter(todayStart) ||
+        dateStart.isAtSameMomentAs(todayStart);
   }
 
   bool _canLoadTimeSlots() {
@@ -173,7 +175,7 @@ class _BookingScreenState extends State<BookingScreen> {
               //   ),
               // ),
               SizedBox(height: 20),
-              
+
               // Salon Name
               Center(
                 child: Text(
@@ -182,7 +184,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               ),
               SizedBox(height: 20),
-              
+
               // Selected Services Summary
               Container(
                 width: double.infinity,
@@ -202,13 +204,15 @@ class _BookingScreenState extends State<BookingScreen> {
                       ),
                     ),
                     SizedBox(height: 8),
-                    ...widget.selectedServices.map((service) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text(
-                        '• ${service['service_name']} (Rs ${service['price']})',
-                        style: TextStyle(fontSize: 14),
+                    ...widget.selectedServices.map(
+                      (service) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Text(
+                          '• ${service['service_name']} (Rs ${service['price']})',
+                          style: TextStyle(fontSize: 14),
+                        ),
                       ),
-                    )),
+                    ),
                     SizedBox(height: 12),
                     Container(
                       padding: EdgeInsets.all(8),
@@ -230,14 +234,14 @@ class _BookingScreenState extends State<BookingScreen> {
                 ),
               ),
               SizedBox(height: 24),
-              
+
               // Step 1: Stylist Selection
               Text(
                 'Step 1: Select Stylist',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 12),
-              
+
               if (isLoadingStylists)
                 Center(child: CircularProgressIndicator())
               else if (stylistError != null)
@@ -275,16 +279,16 @@ class _BookingScreenState extends State<BookingScreen> {
                     },
                   ),
                 ),
-              
+
               SizedBox(height: 24),
-              
+
               // Step 2: Date Selection
               Text(
                 'Step 2: Select Date',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 12),
-              
+
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -297,7 +301,8 @@ class _BookingScreenState extends State<BookingScreen> {
                   focusedDay: _focusedDay,
                   calendarFormat: _calendarFormat,
                   selectedDayPredicate: (day) {
-                    return selectedDate != null && isSameDay(selectedDate!, day);
+                    return selectedDate != null &&
+                        isSameDay(selectedDate!, day);
                   },
                   enabledDayPredicate: _canSelectDate,
                   onDaySelected: (selectedDay, focusedDay) {
@@ -305,9 +310,10 @@ class _BookingScreenState extends State<BookingScreen> {
                       setState(() {
                         selectedDate = selectedDay;
                         _focusedDay = focusedDay;
-                        selectedTimeSlots.clear(); // Clear time slots when date changes
+                        selectedTimeSlots
+                            .clear(); // Clear time slots when date changes
                       });
-                      
+
                       // Load time slots if both stylist and date are selected
                       if (_canLoadTimeSlots()) {
                         _loadTimeSlots();
@@ -347,16 +353,16 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
               ),
-              
+
               SizedBox(height: 24),
-              
+
               // Step 3: Time Slots (only show if both stylist and date are selected)
               Text(
                 'Step 3: Select Time Slot',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 12),
-              
+
               if (!_canLoadTimeSlots())
                 Container(
                   padding: EdgeInsets.all(16),
@@ -419,7 +425,7 @@ class _BookingScreenState extends State<BookingScreen> {
                     final timeSlot = availableTimeSlots[index];
                     final timeDisplay = _formatTimeSlot(timeSlot);
                     final isSelected = selectedTimeSlots.contains(timeSlot);
-                    
+
                     return ElevatedButton(
                       onPressed: () {
                         setState(() {
@@ -431,24 +437,21 @@ class _BookingScreenState extends State<BookingScreen> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isSelected 
-                            ? Colors.green[100] 
+                        backgroundColor: isSelected
+                            ? Colors.green[100]
                             : Colors.grey[200],
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(
-                        timeDisplay,
-                        style: TextStyle(fontSize: 12),
-                      ),
+                      child: Text(timeDisplay, style: TextStyle(fontSize: 12)),
                     );
                   },
                 ),
-              
+
               SizedBox(height: 24),
-              
+
               // Booking Details Section
               if (selectedTimeSlots.isNotEmpty)
                 // Container(
@@ -478,122 +481,134 @@ class _BookingScreenState extends State<BookingScreen> {
                 //     ],
                 //   ),
                 // ),
-              
-              SizedBox(height: 24),
-              
-              // Confirm Button
-             SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
-                        ? () async {
-                            setState(() {
-                              isConfirmed = true;
-                            });
-                            
-                            final authService = Provider.of<AuthService>(context, listen: false);
-                            final isLoggedIn = await authService.isLoggedIn();
+                SizedBox(height: 24),
 
-                            if (isLoggedIn) {
-                              // User is logged in, proceed directly to confirmation
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => BookingConfirmationScreen(
-                                    salonId: widget.salonId,
-                                    salonName: widget.salonName,
-                                    stylistId: selectedStylistId!,
-                                    stylistName: selectedStylistName,
-                                    selectedServices: widget.selectedServices,
-                                    service: widget.selectedServices
-                                        .map((s) => s['service_name'])
-                                        .join(', '),
-                                    date: selectedDate!,
-                                    time: TimeOfDay(
-                                      hour: DateTime.parse(selectedTimeSlots.first['start']).hour,
-                                      minute: DateTime.parse(selectedTimeSlots.first['start']).minute,
-                                    ),
-                                    selectedEmployee: selectedStylistName,
-                                    selectedTimeSlots: selectedTimeSlots.map((slot) => _formatTimeSlot(slot)).toList(),
-                                    totalDuration: widget.totalDuration,
-                                    totalPrice: widget.totalCost,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              // User is not logged in, store booking data and redirect to login
-                              try {
-                                await BookingStorageService.storePendingBooking(
+              // Confirm Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: selectedTimeSlots.isNotEmpty && !isConfirmed
+                      ? () async {
+                          setState(() {
+                            isConfirmed = true;
+                          });
+
+                          final authService = Provider.of<AuthService>(
+                            context,
+                            listen: false,
+                          );
+                          final isLoggedIn = await authService.isLoggedIn();
+                          // print('User logged in: $isLoggedIn');
+                          if (isLoggedIn) {
+                            // User is logged in, proceed directly to confirmation
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingConfirmationScreen(
                                   salonId: widget.salonId,
                                   salonName: widget.salonName,
                                   stylistId: selectedStylistId!,
                                   stylistName: selectedStylistName,
                                   selectedServices: widget.selectedServices,
+                                  service: widget.selectedServices
+                                      .map((s) => s['service_name'])
+                                      .join(', '),
                                   date: selectedDate!,
-                                  timeSlot: selectedTimeSlots.first, // Store the first selected time slot
+                                  time: TimeOfDay(
+                                    hour: DateTime.parse(
+                                      selectedTimeSlots.first['start'],
+                                    ).hour,
+                                    minute: DateTime.parse(
+                                      selectedTimeSlots.first['start'],
+                                    ).minute,
+                                  ),
+                                  selectedEmployee: selectedStylistName,
+                                  selectedTimeSlots: selectedTimeSlots
+                                      .map((slot) => _formatTimeSlot(slot))
+                                      .toList(),
                                   totalDuration: widget.totalDuration,
                                   totalPrice: widget.totalCost,
-                                );
+                                ),
+                              ),
+                            );
+                          } else {
+                            // User is not logged in, store booking data and redirect to login
+                            try {
+                              await BookingStorageService.storePendingBooking(
+                                salonId: widget.salonId,
+                                salonName: widget.salonName,
+                                stylistId: selectedStylistId!,
+                                stylistName: selectedStylistName,
+                                selectedServices: widget.selectedServices,
+                                date: selectedDate!,
+                                timeSlot: selectedTimeSlots.first,
+                                totalDuration: widget.totalDuration,
+                                totalPrice: widget.totalCost,
+                              );
 
-                                // Show message to user
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Please login to complete your booking'),
-                                    backgroundColor: Colors.blue,
+                              // Show message to user
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Please login to complete your booking',
                                   ),
-                                );
+                                  backgroundColor: Colors.blue,
+                                ),
+                              );
 
-                                // Navigate to login screen
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LoginScreen(
-                                      fromBooking: true, // Flag to indicate this came from booking
-                                    ),
+                              // Navigate to login screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      LoginScreen(fromBooking: true),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Error storing booking data: $e',
                                   ),
-                                );
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error storing booking data: $e'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
                             }
-                            
-                            setState(() {
-                              isConfirmed = false;
-                            });
                           }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+
+                          // Reset the confirmation state
+                          setState(() {
+                            isConfirmed = false;
+                          });
+                        }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      selectedTimeSlots.isEmpty 
-                          ? 'Select Time Slot to Continue'
-                          : 'Proceed to Confirmation',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  ),
+                  child: Text(
+                    selectedTimeSlots.isEmpty
+                        ? 'Select Time Slot to Continue'
+                        : 'Proceed to Confirmation',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-              
+              ),
+
               SizedBox(height: 24),
-              
+
               // Note about booking confirmation
               Text(
                 'Note: You can change your booking details later in the app.',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),    
+              ),
             ],
           ),
         ),
@@ -601,9 +616,13 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildStylistButton(String stylistId, String name, String? profilePicLink) {
+  Widget _buildStylistButton(
+    String stylistId,
+    String name,
+    String? profilePicLink,
+  ) {
     final isSelected = selectedStylistId == stylistId;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -611,7 +630,7 @@ class _BookingScreenState extends State<BookingScreen> {
           selectedStylistName = name;
           selectedTimeSlots.clear(); // Clear time slots when changing stylist
         });
-        
+
         // Load time slots if both stylist and date are selected
         if (_canLoadTimeSlots()) {
           _loadTimeSlots();
@@ -640,13 +659,21 @@ class _BookingScreenState extends State<BookingScreen> {
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
                             color: Colors.grey[300],
-                            child: Icon(Icons.person, color: Colors.grey[600], size: 40),
+                            child: Icon(
+                              Icons.person,
+                              color: Colors.grey[600],
+                              size: 40,
+                            ),
                           );
                         },
                       )
                     : Container(
                         color: Colors.grey[300],
-                        child: Icon(Icons.person, color: Colors.grey[600], size: 40),
+                        child: Icon(
+                          Icons.person,
+                          color: Colors.grey[600],
+                          size: 40,
+                        ),
                       ),
               ),
             ),
