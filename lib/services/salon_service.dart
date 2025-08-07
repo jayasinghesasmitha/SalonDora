@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:book_my_salon/services/auth_service.dart';
 import 'dart:typed_data';
+import 'package:book_my_salon/config/api_constants.dart';
 
 class SalonService {
   static SalonService? _instance;
@@ -18,23 +18,13 @@ class SalonService {
     _dio = AuthService().dio;
   }
 
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000/api'; // Android emulator
-    } else if (Platform.isIOS) {
-      return 'http://localhost:3000/api'; // iOS simulator
-    } else {
-      return 'http://localhost:3000/api'; // Web/Desktop
-    }
-  }
-
   // Get all salons with automatic token refresh
   Future<List<Map<String, dynamic>>> getAllSalons() async {
     try {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons',
+        '${ApiConstants.baseUrl}/salons',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -64,7 +54,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons/name/${Uri.encodeComponent(name)}',
+        '${ApiConstants.baseUrl}/salons/name/${Uri.encodeComponent(name)}',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -94,7 +84,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons/by-id/$salonId',
+        '${ApiConstants.baseUrl}/salons/by-id/$salonId',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -126,7 +116,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons/$salonId/services',
+        '${ApiConstants.baseUrl}/salons/$salonId/services',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -167,7 +157,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        '$baseUrl/salons/location',
+        '${ApiConstants.baseUrl}/salons/location',
         data: {
           'location': {
             'latitude': latitude,

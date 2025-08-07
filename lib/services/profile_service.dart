@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/config/api_constants.dart';
 
 class ProfileService {
   static ProfileService? _instance;
@@ -16,13 +16,7 @@ class ProfileService {
     _dio = Dio();
   }
 
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000/api/profile';
-    } else {
-      return 'http://localhost:3000/api/profile';
-    }
-  }
+
 
   // Get user profile
   Future<Map<String, dynamic>> getUserProfile() async {
@@ -30,7 +24,7 @@ class ProfileService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        baseUrl,
+        ApiConstants.baseUrl,
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -110,7 +104,7 @@ class ProfileService {
       }
 
       final response = await _dio.put(
-        baseUrl,
+        ApiConstants.baseUrl,
         data: requestBody,
         options: Options(
           headers: {

@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/config/api_constants.dart';
 
 class BookingService {
   static BookingService? _instance;
@@ -17,15 +17,6 @@ class BookingService {
     _dio = AuthService().dio;
   }
 
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000/api'; // Android emulator
-    } else if (Platform.isIOS) {
-      return 'http://localhost:3000/api'; // iOS simulator
-    } else {
-      return 'http://localhost:3000/api'; // Web/Desktop
-    }
-  }
 
   // Get eligible stylists for selected services
   Future<List<Map<String, dynamic>>> getEligibleStylists(
@@ -36,7 +27,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        '$baseUrl/bookings/eligible-stylists',
+        '${ApiConstants.baseUrl}/bookings/eligible-stylists',
         data: {
           'salonId': salonId,
           'serviceIds': serviceIds,
@@ -83,7 +74,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        '$baseUrl/salons/available-time-slots-sithum',
+        '${ApiConstants.baseUrl}/salons/available-time-slots-sithum',
         data: {
           'service_ids': serviceIds,
           'stylist_id': stylistId,
@@ -137,7 +128,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        '$baseUrl/bookings',
+        '${ApiConstants.baseUrl}/bookings',
         data: {
           'stylist_id': stylistId,
           'service_ids': serviceIds,
@@ -184,7 +175,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/bookings',
+        '${ApiConstants.baseUrl}/bookings',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -224,7 +215,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.put(  
-        '$baseUrl/bookings/$bookingId/cancel',
+        '${ApiConstants.baseUrl}/bookings/$bookingId/cancel',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
@@ -263,7 +254,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/bookings/history',
+        '${ApiConstants.baseUrl}/bookings/history',
         queryParameters: {
           'page': page,
           'limit': limit,

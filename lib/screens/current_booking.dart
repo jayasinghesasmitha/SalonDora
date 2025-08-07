@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:book_my_salon/screens/booking_screen.dart';
 import 'package:book_my_salon/screens/booking_history.dart';
 import 'package:book_my_salon/screens/home_screen.dart';
 import 'package:book_my_salon/screens/user_profile.dart';
 import 'package:book_my_salon/screens/auth/login_screen.dart'; // Add this import
-import 'package:book_my_salon/services/salon_service.dart';
 import 'package:book_my_salon/services/auth_service.dart'; // Add this import
 import 'package:intl/intl.dart';
 import 'package:book_my_salon/services/booking_service.dart'; 

@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:book_my_salon/services/auth_service.dart';
+import 'package:book_my_salon/config/api_constants.dart';
 
 class ReviewService {
   static ReviewService? _instance;
@@ -16,13 +16,6 @@ class ReviewService {
     _dio = Dio();
   }
 
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000/api/review';
-    } else {
-      return 'http://localhost:3000/api/review';
-    }
-  }
 
   // Create a review
   Future<Map<String, dynamic>> createReview({
@@ -35,7 +28,7 @@ class ReviewService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        baseUrl,
+        ApiConstants.baseUrl,
         data: {
           'booking_id': bookingId,
           'salon_id': salonId,
@@ -94,7 +87,7 @@ class ReviewService {
       }
 
       final response = await _dio.put(
-        '$baseUrl/$reviewId',
+        '$ApiConstants.baseUrl/$reviewId',
         data: data,
         options: Options(
           headers: {
