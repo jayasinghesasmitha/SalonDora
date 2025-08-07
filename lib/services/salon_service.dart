@@ -213,7 +213,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        '$baseUrl/salons/available-time-slots',
+        '$baseUrl/salons/available-time-slots-sithum',
         data: {
           'service_ids': serviceIds,
           'stylist_id': stylistId,
