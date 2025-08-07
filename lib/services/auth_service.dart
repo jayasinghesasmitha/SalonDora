@@ -1,11 +1,10 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:book_my_salon/config/api_constants.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:3000/api';
   static AuthService? _instance;
   late Dio _dio;
   late CookieJar _cookieJar;
@@ -26,7 +25,7 @@ class AuthService {
   Future<Map<String, dynamic>> loginUser(String email, String password) async {
     try {
       final response = await _dio.post(
-        '$baseUrl/auth/login',
+        '${ApiConstants.baseUrl}/auth/login',
         data: {'email': email, 'password': password},
       );
 
@@ -87,7 +86,7 @@ class AuthService {
       };
 
       final response = await _dio.post(
-        '$baseUrl/auth/register-customer',
+        '${ApiConstants.baseUrl}/auth/register-customer',
         data: body,
       );
       print("Response code = ${response.statusCode}");
@@ -109,12 +108,15 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      // Get the token BEFORE clearing local storage
+      final token = await getAccessToken();
+
       // Clear local storage first (this always succeeds)
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('access_token');
       await prefs.remove('refresh_token');
       await prefs.remove('user_role');
-      
+
       // Clear cookies
       try {
         _cookieJar.deleteAll();
@@ -124,16 +126,17 @@ class AuthService {
 
       // Optional: Call backend logout (don't wait for it if it fails)
       try {
-        final token = await getAccessToken();
         if (token != null) {
-          await _dio.post(
-            '$baseUrl/auth/logout',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-              sendTimeout: Duration(seconds: 5),
-              receiveTimeout: Duration(seconds: 5),
-            ),
-          ).timeout(Duration(seconds: 5));
+          await _dio
+              .post(
+                '${ApiConstants.baseUrl}/auth/logout',
+                options: Options(
+                  headers: {'Authorization': 'Bearer $token'},
+                  sendTimeout: Duration(seconds: 5),
+                  receiveTimeout: Duration(seconds: 5),
+                ),
+              )
+              .timeout(Duration(seconds: 5));
         }
       } catch (e) {
         // Ignore backend logout errors - local logout is more important
@@ -151,7 +154,7 @@ class AuthService {
   //     final prefs = await SharedPreferences.getInstance();
   //     await prefs.remove('access_token');
   //     await prefs.remove('user_role');
-      
+
   //     // Clear all cookies
   //     try {
   //       _cookieJar.deleteAll();
@@ -185,7 +188,9 @@ class AuthService {
   Future<Map<String, dynamic>> refreshAccessToken() async {
     try {
       // The refresh token cookie is automatically sent by dio
-      final response = await _dio.post('$baseUrl/auth/refresh-token');
+      final response = await _dio.post(
+        '${ApiConstants.baseUrl}/auth/refresh-token',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -215,7 +220,7 @@ class AuthService {
       if (token == null) return null;
 
       final response = await _dio.get(
-        '$baseUrl/auth/user',
+        '${ApiConstants.baseUrl}/auth/user',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 

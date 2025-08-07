@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:book_my_salon/services/auth_service.dart';
 import 'dart:typed_data';
+import 'package:book_my_salon/config/api_constants.dart';
 
 class SalonService {
   static SalonService? _instance;
@@ -18,23 +18,13 @@ class SalonService {
     _dio = AuthService().dio;
   }
 
-  static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000/api'; // Android emulator
-    } else if (Platform.isIOS) {
-      return 'http://localhost:3000/api'; // iOS simulator
-    } else {
-      return 'http://localhost:3000/api'; // Web/Desktop
-    }
-  }
-
   // Get all salons with automatic token refresh
   Future<List<Map<String, dynamic>>> getAllSalons() async {
     try {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons',
+        '${ApiConstants.baseUrl}/salons',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -64,7 +54,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons/name/${Uri.encodeComponent(name)}',
+        '${ApiConstants.baseUrl}/salons/name/${Uri.encodeComponent(name)}',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -94,7 +84,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons/by-id/$salonId',
+        '${ApiConstants.baseUrl}/salons/by-id/$salonId',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -126,7 +116,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.get(
-        '$baseUrl/salons/$salonId/services',
+        '${ApiConstants.baseUrl}/salons/$salonId/services',
         options: Options(
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
@@ -157,274 +147,7 @@ class SalonService {
     }
   }
 
-  // Get eligible stylists for selected services
-  Future<List<Map<String, dynamic>>> getEligibleStylists(
-    String salonId, 
-    List<String> serviceIds
-  ) async {
-    try {
-      final token = await AuthService().getAccessToken();
-
-      final response = await _dio.post(
-        '$baseUrl/bookings/eligible-stylists',
-        data: {
-          'salonId': salonId,
-          'serviceIds': serviceIds,
-        },
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      if (response.data['success'] == true) {
-        final List<dynamic> stylists = response.data['data'];
-        return stylists.cast<Map<String, dynamic>>();
-      } else {
-        throw Exception('Failed to fetch eligible stylists');
-      }
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 401) {
-        // Token expired, try to refresh
-        try {
-          await AuthService().refreshAccessToken();
-          return getEligibleStylists(salonId, serviceIds); // Retry with new token
-        } catch (refreshError) {
-          throw Exception('Authentication failed: Please login again');
-        }
-      }
-      if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Invalid salon ID or service IDs');
-      }
-      throw Exception('Error fetching eligible stylists: $e');
-    }
-  }
-
-  // Get available time slots for selected services, stylist, salon and date
-  Future<List<Map<String, dynamic>>> getAvailableTimeSlots({
-    required List<String> serviceIds,
-    required String stylistId,
-    required String salonId,
-    required String date, // Format: YYYY-MM-DD
-  }) async {
-    try {
-      final token = await AuthService().getAccessToken();
-
-      final response = await _dio.post(
-        '$baseUrl/salons/available-time-slots',
-        data: {
-          'service_ids': serviceIds,
-          'stylist_id': stylistId,
-          'salon_id': salonId,
-          'date': date,
-        },
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      if (response.data['success'] == true) {
-        final List<dynamic> timeSlots = response.data['data'];
-        return timeSlots.cast<Map<String, dynamic>>();
-      } else {
-        throw Exception('Failed to fetch available time slots');
-      }
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 401) {
-        // Token expired, try to refresh
-        try {
-          await AuthService().refreshAccessToken();
-          return getAvailableTimeSlots(
-            serviceIds: serviceIds,
-            stylistId: stylistId,
-            salonId: salonId,
-            date: date,
-          ); // Retry with new token
-        } catch (refreshError) {
-          throw Exception('Authentication failed: Please login again');
-        }
-      }
-      if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Invalid input parameters for time slots');
-      }
-      throw Exception('Error fetching available time slots: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> createBooking({
-    required String stylistId,
-    required List<String> serviceIds,
-    required String bookingStartDateTime, // ISO format: "2025-07-31T10:00:00Z"
-    String? notes,
-  }) async {
-    try {
-      final token = await AuthService().getAccessToken();
-
-      final response = await _dio.post(
-        '$baseUrl/bookings',
-        data: {
-          'stylist_id': stylistId,
-          'service_ids': serviceIds,
-          'booking_start_datetime': bookingStartDateTime,
-          if (notes != null && notes.isNotEmpty) 'notes': notes,
-        },
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 401) {
-        // Token expired, try to refresh
-        try {
-          await AuthService().refreshAccessToken();
-          return createBooking(
-            stylistId: stylistId,
-            serviceIds: serviceIds,
-            bookingStartDateTime: bookingStartDateTime,
-            notes: notes,
-          ); // Retry with new token
-        } catch (refreshError) {
-          throw Exception('Authentication failed: Please login again');
-        }
-      }
-      if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Invalid booking data: ${e.response?.data['error'] ?? 'Bad request'}');
-      }
-      if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
-      }
-      throw Exception('Error creating booking: $e');
-    }
-  }
-
-  // Get current user bookings
-  Future<List<Map<String, dynamic>>> getUserBookings() async {
-    try {
-      final token = await AuthService().getAccessToken();
-
-      final response = await _dio.get(
-        '$baseUrl/bookings',
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      if (response.data is List) {
-        return List<Map<String, dynamic>>.from(response.data);
-      } else {
-        throw Exception('Unexpected response format');
-      }
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 401) {
-        // Token expired, try to refresh
-        try {
-          await AuthService().refreshAccessToken();
-          return getUserBookings(); // Retry with new token
-        } catch (refreshError) {
-          throw Exception('Authentication failed: Please login again');
-        }
-      }
-      if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
-      }
-      if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
-      }
-      throw Exception('Error fetching bookings: $e');
-    }
-  }
-
-  // Cancel a booking
-  Future<Map<String, dynamic>> cancelBooking(String bookingId) async {
-    try {
-      final token = await AuthService().getAccessToken();
-
-      final response = await _dio.put(  
-        '$baseUrl/bookings/$bookingId/cancel',
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 401) {
-        // Token expired, try to refresh
-        try {
-          await AuthService().refreshAccessToken();
-          return cancelBooking(bookingId); // Retry with new token
-        } catch (refreshError) {
-          throw Exception('Authentication failed: Please login again');
-        }
-      }
-      if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('${e.response?.data['error'] ?? 'Cannot cancel booking'}');
-      }
-      if (e is DioException && e.response?.statusCode == 404) {
-        throw Exception('Booking not found or cannot be cancelled');
-      }
-      if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
-      }
-      throw Exception('Error cancelling booking: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> getBookingHistory({int page = 1, int limit = 10}) async {
-    try {
-      final token = await AuthService().getAccessToken();
-
-      final response = await _dio.get(
-        '$baseUrl/bookings/history',
-        queryParameters: {
-          'page': page,
-          'limit': limit,
-        },
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 401) {
-        // Token expired, try to refresh
-        try {
-          await AuthService().refreshAccessToken();
-          return getBookingHistory(page: page, limit: limit); // Retry with new token
-        } catch (refreshError) {
-          throw Exception('Authentication failed: Please login again');
-        }
-      }
-      if (e is DioException && e.response?.statusCode == 400) {
-        throw Exception('Bad request: ${e.response?.data['error'] ?? 'Invalid request'}');
-      }
-      if (e is DioException && e.response?.statusCode == 500) {
-        throw Exception('Server error: ${e.response?.data['error'] ?? 'Internal server error'}');
-      }
-      throw Exception('Error fetching booking history: $e');
-    }
-  }
-
+  // Get salons by location
   Future<List<Map<String, dynamic>>> getSalonsByLocation({
     required double latitude,
     required double longitude,
@@ -434,7 +157,7 @@ class SalonService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.post(
-        '$baseUrl/salons/location',
+        '${ApiConstants.baseUrl}/salons/location',
         data: {
           'location': {
             'latitude': latitude,
@@ -473,40 +196,7 @@ class SalonService {
     }
   }
 
-  // // Parse location from PostgreSQL geography format
-  // static Map<String, double>? parseLocationFromGeography(String? locationString) {
-  //   if (locationString == null || locationString.isEmpty) return null;
-    
-  //   try {
-  //     // Remove the SRID prefix if present (e.g., "0101000020E6100000...")
-  //     String hexString = locationString;
-      
-  //     // If it starts with SRID info, extract just the geometry part
-  //     if (hexString.length > 8) {
-  //       // Skip SRID (first 8 chars) and endianness/type (next 8 chars)
-  //       hexString = hexString.substring(16);
-  //     }
-      
-  //     // Parse the hex string to get coordinates
-  //     // This is a simplified parser - you might need to adjust based on your exact format
-  //     if (hexString.length >= 32) {
-  //       // Extract longitude (first 8 bytes) and latitude (next 8 bytes) in hex
-  //       final lngHex = hexString.substring(0, 16);
-  //       final latHex = hexString.substring(16, 32);
-        
-  //       // Convert hex to double (this is simplified - actual parsing is more complex)
-  //       // For now, let's use a different approach with the database function
-  //       return null; // We'll handle this in the backend instead
-  //     }
-      
-  //     return null;
-  //   } catch (e) {
-  //     print('Error parsing location: $e');
-  //     return null;
-  //   }
-  // }
-
-
+  // Parse location from PostgreSQL geography format
   Map<String, double>? parseLocationFromGeography(String? locationString) {
     if (locationString == null || locationString.isEmpty) return null;
 
@@ -533,5 +223,4 @@ class SalonService {
       return null;
     }
   }
-
 }
