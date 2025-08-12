@@ -388,7 +388,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text('Error loading time slots: $timeSlotsError'),
+                      Text('Error loading time slots'),
                       SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _loadTimeSlots,
@@ -568,7 +568,7 @@ class _BookingScreenState extends State<BookingScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    'Error storing booking data: $e',
+                                    'Error storing booking data',
                                   ),
                                   backgroundColor: Colors.red,
                                 ),
@@ -604,11 +604,11 @@ class _BookingScreenState extends State<BookingScreen> {
 
               SizedBox(height: 24),
 
-              // Note about booking confirmation
-              Text(
-                'Note: You can change your booking details later in the app.',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
+              // // Note about booking confirmation
+              // Text(
+              //   'Note: You can change your booking details later in the app.',
+              //   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              // ),
             ],
           ),
         ),

@@ -61,7 +61,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           .map((service) => service['service_id'].toString())
           .toList();
 
-      // Format the booking start datetime
+      // Format the booking start datetime - keep in local timezone
       final bookingDateTime = DateTime(
         widget.date.year,
         widget.date.month,
@@ -69,7 +69,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         widget.time.hour,
         widget.time.minute,
       );
-      final bookingStartDateTime = bookingDateTime.toUtc().toIso8601String();
+      
+      // Send as ISO string without UTC conversion
+      final bookingStartDateTime = bookingDateTime.toIso8601String();
+      
+      // OR if your backend expects a specific format, use:
+      // final bookingStartDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(bookingDateTime);
 
       // Create the booking
       final result = await BookingService().createBooking(

@@ -215,7 +215,7 @@ class BookingService {
       final token = await AuthService().getAccessToken();
 
       final response = await _dio.put(  
-        '${ApiConstants.baseUrl}/bookings/$bookingId/cancel',
+        '${ApiConstants.baseUrl}/bookings/$bookingId',
         options: Options(
           headers: {
             'Content-Type': 'application/json',
