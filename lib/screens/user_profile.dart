@@ -4,7 +4,7 @@ import 'package:book_my_salon/screens/current_booking.dart';
 import 'package:book_my_salon/screens/auth/login_screen.dart';
 import 'package:book_my_salon/services/profile_service.dart';
 import 'package:book_my_salon/services/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Add this import
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:intl/intl.dart';
 
 class UserProfile extends StatefulWidget {
@@ -190,94 +190,41 @@ class _UserProfileState extends State<UserProfile> {
   }
 
   Future<void> _logout() async {
+    final parentContext = context; // Capture before dialog
+
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
+      context: parentContext,
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('Logout'),
           content: Text('Are you sure you want to logout?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text('Cancel'),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
-                
-                // Show loading
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text(
-                          'Logging out...',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                Navigator.of(dialogContext).pop(); // Close the alert
 
                 try {
-                  // Set a timeout for the entire logout process
-                  await AuthService().signOut().timeout(
-                    Duration(seconds: 10),
-                    onTimeout: () {
-                      print('Logout timed out, but proceeding anyway');
-                    },
-                  );
-                  
-                  // Close loading dialog
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  }
-                  
-                  // Navigate to login screen
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LoginScreen(fromBooking: false),
-                    ),
-                    (route) => false,
-                  );
-                } catch (e) {
-                  // Close loading dialog
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  }
-                  
-                  // Even if logout fails, clear local state and navigate
-                  try {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.clear();
-                  } catch (clearError) {
-                    print('Failed to clear preferences: $clearError');
-                  }
-                  
-                  // Navigate anyway - user wants to logout
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LoginScreen(fromBooking: false),
-                    ),
-                    (route) => false,
-                  );
-                  
-                  // Show error but don't prevent logout
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Logout completed (with errors)'),
-                      backgroundColor: Colors.orange,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
+                  await AuthService().signOut().timeout(Duration(seconds: 2));
+                } catch (_) {}
+
+                try {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
+                } catch (_) {}
+
+                if (!mounted) return;
+
+                Navigator.of(parentContext).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    // builder: (_) => LoginScreen(fromBooking: false),
+                    builder: (_) => HomeScreen(),
+                  ),
+                  (route) => false,
+                );
               },
               child: Text('Logout', style: TextStyle(color: Colors.red)),
             ),
@@ -286,6 +233,7 @@ class _UserProfileState extends State<UserProfile> {
       },
     );
   }
+
 
   void _navigateToLogin() {
     Navigator.pushAndRemoveUntil(
@@ -563,16 +511,16 @@ class _UserProfileState extends State<UserProfile> {
                   const SizedBox(height: 16),
 
                   // Location
-                  TextFormField(
-                    controller: _locationController,
-                    decoration: InputDecoration(
-                      labelText: 'Location',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      prefixIcon: Icon(Icons.location_on_outlined),
-                    ),
-                  ),
+                  // TextFormField(
+                  //   controller: _locationController,
+                  //   decoration: InputDecoration(
+                  //     labelText: 'Location',
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(8),
+                  //     ),
+                  //     prefixIcon: Icon(Icons.location_on_outlined),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
