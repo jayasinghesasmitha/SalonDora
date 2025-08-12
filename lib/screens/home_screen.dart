@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as latLng;
@@ -66,18 +67,37 @@ class _HomeScreenState extends State<HomeScreen> {
         salons = await _salonService.getAllSalons();
       }
 
+      // Transform salons to include parsed coordinates
+      final transformedSalons = salons.map((salon) {
+        final location = _getSalonLocation(salon);
+        return {
+          ...salon, // Keep all original data
+          'latitude': location?.latitude,
+          'longitude': location?.longitude,
+        };
+      }).toList();
+
       setState(() {
-        _allSalons = salons;
-        _displayedSalons = salons;
+        _allSalons = transformedSalons;
+        _displayedSalons = transformedSalons;
+        print('Transformed salons: $_allSalons');
       });
     } catch (e) {
       // If location-based search fails, try getting all salons
       if (_useLocationBasedSearch) {
         try {
           final allSalons = await _salonService.getAllSalons();
+          final transformedSalons = allSalons.map((salon) {
+            final location = _getSalonLocation(salon);
+            return {
+              ...salon,
+              'latitude': location?.latitude,
+              'longitude': location?.longitude,
+            };
+          }).toList();
           setState(() {
-            _allSalons = allSalons;
-            _displayedSalons = allSalons;
+            _allSalons = transformedSalons;
+            _displayedSalons = transformedSalons;
             _useLocationBasedSearch = false; // Disable location-based search
           });
         } catch (fallbackError) {
@@ -103,10 +123,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Updated method to get salon location from API data
+  // Updated method to get salon location from API data using temp_home logic
   latLng.LatLng? _getSalonLocation(Map<String, dynamic> salon) {
     try {
-      // Check if the salon data includes parsed latitude and longitude
+      // Check if the salon data includes parsed latitude and longitude first
       if (salon['latitude'] != null && salon['longitude'] != null) {
         final lat = double.tryParse(salon['latitude'].toString());
         final lng = double.tryParse(salon['longitude'].toString());
@@ -125,11 +145,25 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
 
-      // Legacy: try to parse PostgreSQL geography format (if needed)
+      // Use temp_home logic for hex decoding
       if (salon['location'] != null) {
         final locationStr = salon['location'].toString();
+        final bytes = hexToBytes(locationStr);
+        if (bytes.length >= 21) { // 1 byte order + 4 bytes type + 4 bytes SRID + 16 bytes coordinates
+          final byteData = ByteData.view(Uint8List.fromList(bytes).buffer);
+          final byteOrder = bytes[0]; // 1 = little-endian, 0 = big-endian
+          Endian endian = byteOrder == 1 ? Endian.little : Endian.big;
+          final type = byteData.getUint32(1, endian);
+          int coordOffset = 9; // Skip byte order, type (4 bytes), and SRID (4 bytes)
+          if (type & 0x20000000 == 0x20000000) { // Has SRID
+            // coordOffset is already 9, no change needed
+          }
+          final lon = byteData.getFloat64(coordOffset, endian);
+          final lat = byteData.getFloat64(coordOffset + 8, endian);
+          return latLng.LatLng(lat, lon);
+        }
 
-        // If it's already in a readable format like "POINT(lng lat)"
+        // Fallback: try to parse PostgreSQL geography format (if needed)
         final pointRegex = RegExp(r'POINT\(([^\s]+)\s([^\)]+)\)');
         final pointMatch = pointRegex.firstMatch(locationStr);
         if (pointMatch != null) {
@@ -146,6 +180,16 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Error parsing salon location: $e');
       return null;
     }
+  }
+
+  // Add hexToBytes function from temp_home
+  List<int> hexToBytes(String hex) {
+    hex = hex.replaceAll(' ', '');
+    List<int> bytes = [];
+    for (int i = 0; i < hex.length; i += 2) {
+      bytes.add(int.parse(hex.substring(i, i + 2), radix: 16));
+    }
+    return bytes;
   }
 
   // Add method to refresh salons when location changes
@@ -264,8 +308,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final searchResults = await _salonService.searchSalonsByName(query);
+      // Transform search results too
+      final transformedResults = searchResults.map((salon) {
+        final location = _getSalonLocation(salon);
+        return {
+          ...salon,
+          'latitude': location?.latitude,
+          'longitude': location?.longitude,
+        };
+      }).toList();
       setState(() {
-        _displayedSalons = searchResults;
+        _displayedSalons = transformedResults;
+        print('Transformed search results: $_displayedSalons');
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -443,38 +497,33 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                               ),
-                            // Salon markers
-                            ..._displayedSalons
-                                .map((salon) {
-                                  final salonLocation = _getSalonLocation(
-                                    salon,
-                                  );
-                                  if (salonLocation == null) return null;
-
-                                  return Marker(
-                                    point: salonLocation,
-                                    child: GestureDetector(
-                                      onTap: () => _onSalonMarkerTapped(salon),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.red,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.store,
+                            // Salon markers using transformed data
+                            ..._displayedSalons.map((salon) {
+                              if (salon['latitude'] != null && salon['longitude'] != null) {
+                                return Marker(
+                                  point: latLng.LatLng(salon['latitude'], salon['longitude']),
+                                  child: GestureDetector(
+                                    onTap: () => _onSalonMarkerTapped(salon),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
                                           color: Colors.white,
-                                          size: 20.0,
+                                          width: 2,
                                         ),
                                       ),
+                                      child: const Icon(
+                                        Icons.store,
+                                        color: Colors.white,
+                                        size: 20.0,
+                                      ),
                                     ),
-                                  );
-                                })
-                                .where((marker) => marker != null)
-                                .cast<Marker>(),
+                                  ),
+                                );
+                              }
+                              return null;
+                            }).where((marker) => marker != null).cast<Marker>(),
                           ],
                         ),
                       ],

@@ -4,7 +4,7 @@ class ApiConstants {
   // Private constructor to prevent instantiation
   ApiConstants._();
 
-  // Base URL configuration
+  // // Base URL configuration
   // static String get baseUrl {
   //   if (Platform.isAndroid) {
   //     return 'http://10.0.2.2:3000/api'; // Android emulator
