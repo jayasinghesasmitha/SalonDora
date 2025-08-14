@@ -47,7 +47,7 @@ Both apps are built with distinct front ends but share a **common backend**, ens
    ```bash
    cd backend
    npm install
-   npm start
+   npm run dev
    ```
 4. Launch both Flutter apps:
    ```bash
