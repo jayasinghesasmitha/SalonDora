@@ -1,6 +1,6 @@
-# 💇‍♀️ SmartSalon – Dual App Booking System
+# 💇‍♀️ Salondora mobile app
 
-Welcome to **SmartSalon**, a full-featured salon booking platform designed for both **customers** and **salon owners**. Our system includes two separate apps—one for clients and one for salons—connected through a unified backend to streamline appointment scheduling, service customization, and location-based discovery.
+Welcome to **SalonDora**, a full-featured salon booking platform designed for both **customers** and **salon owners**. Our system includes two separate apps—one for clients and one for salons—connected through a unified backend to streamline appointment scheduling, service customization, and location-based discovery.
 
 ## 📱 Project Overview
 
@@ -40,7 +40,7 @@ Both apps are built with distinct front ends but share a **common backend**, ens
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/smartsalon.git
+   git clone https://github.com/jayasinghesasmitha/SalonDora.git
    ```
 2. Set up Supabase and configure environment variables.
 3. Run the Node.js backend:
