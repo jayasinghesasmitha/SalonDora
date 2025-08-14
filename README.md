@@ -1,16 +1,57 @@
-# book_my_salon
+# 💇‍♀️ SmartSalon – Dual App Booking System
 
-A new Flutter project.
+Welcome to **SmartSalon**, a full-featured salon booking platform designed for both **customers** and **salon owners**. Our system includes two separate apps—one for clients and one for salons—connected through a unified backend to streamline appointment scheduling, service customization, and location-based discovery.
 
-## Getting Started
+## 📱 Project Overview
 
-This project is a starting point for a Flutter application.
+SmartSalon offers a seamless experience for both sides of the salon ecosystem:
 
-A few resources to get you started if this is your first Flutter project:
+### 👤 Customer App
+- Register and log in
+- View nearby salons via interactive map
+- Browse services and stylists
+- Book appointments with preferred time slots
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 🏪 Salon App
+- Register salon and create a profile
+- Customize available services and time slots
+- Manage bookings and customer interactions
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Both apps are built with distinct front ends but share a **common backend**, ensuring smooth data flow and real-time updates.
+
+## 🧰 Tech Stack
+
+| Layer        | Technology Used        |
+|--------------|------------------------|
+| Frontend     | Flutter (Dart)         |
+| Backend      | Node.js                |
+| Database     | Supabase (PostgreSQL)  |
+| Location     | Map integration via Flutter plugins |
+
+## 🗺️ Key Features
+
+- 📍 **Location-Based Discovery**: Customers see salons near them on the home screen map
+- 🧑‍🎨 **Stylist Selection**: Choose specific stylists and services
+- 📆 **Time Slot Booking**: Real-time availability and scheduling
+- 🛠️ **Salon Customization**: Salons manage their offerings and schedules
+
+
+## 🚀 Getting Started
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/smartsalon.git
+   ```
+2. Set up Supabase and configure environment variables.
+3. Run the Node.js backend:
+   ```bash
+   cd backend
+   npm install
+   npm start
+   ```
+4. Launch both Flutter apps:
+   ```bash
+   flutter run
+   ```
+
+
